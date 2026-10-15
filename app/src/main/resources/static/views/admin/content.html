@@ -44,8 +44,8 @@
           </div>
           <div class="col-lg-6">
             <rx-card heading="Upload MCQs">
-              <card-actions><span class="rb brand">.csv or pasted rows</span></card-actions>
-              <input type="file" class="form-control mb-2" accept=".csv,.txt" on-file-text="vm.mcqText = text">
+              <card-actions><span class="rb brand">.xlsx / .csv or pasted rows</span></card-actions>
+              <input type="file" class="form-control mb-2" accept=".xlsx,.csv,.txt" on-file-text="vm.mcqText = text">
               <textarea class="form-control" placeholder="{{vm.sample}}" ng-model="vm.mcqText"></textarea>
               <div class="d-flex gap-2 mt-3">
                 <button class="btn btn-primary" ng-disabled="!vm.sel.topic || !vm.mcqText.trim()" ng-click="vm.uploadMcqs('ADD')"><i class="bi bi-upload me-1"></i>Add questions</button>

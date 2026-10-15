@@ -224,20 +224,45 @@
 
   // ---- directives ----
 
-  // Reads a chosen text file and hands its contents to on-file-text="fn(text)".
-  app.directive('onFileText', function () {
+  // Reads a chosen file and hands its text to on-file-text="fn(text)". Excel .xlsx files are converted
+  // to CSV text (first sheet) so the server sees the same format as an uploaded or pasted CSV.
+  app.directive('onFileText', function (Toast) {
     return {
       scope: { onFileText: '&' },
       link: function (scope, el) {
         el.on('change', function (e) {
-          var f = e.target.files[0];
+          var input = e.target, f = input.files[0];
           if (!f) return;
+          if (/\.xls$/i.test(f.name)) {
+            scope.$evalAsync(function () { Toast.show('Old .xls files are not supported: save the sheet as .xlsx or CSV', 'error'); });
+            input.value = '';
+            return;
+          }
+          var excel = /\.xlsx$/i.test(f.name);
           var r = new FileReader();
           r.onload = function () {
-            scope.$evalAsync(function () { scope.onFileText({ text: String(r.result) }); });
-            e.target.value = '';
+            scope.$evalAsync(function () {
+              var text;
+              if (excel) {
+                try {
+                  var wb = window.XLSX.read(r.result, { type: 'array' });
+                  text = window.XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+                } catch (err) {
+                  Toast.show('Could not read that Excel file', 'error');
+                  return;
+                }
+              } else {
+                text = String(r.result);
+              }
+              if (!text.trim()) {
+                Toast.show('That file has no rows', 'error');
+                return;
+              }
+              scope.onFileText({ text: text });
+            });
+            input.value = '';
           };
-          r.readAsText(f);
+          if (excel) r.readAsArrayBuffer(f); else r.readAsText(f);
         });
       }
     };

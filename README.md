@@ -80,6 +80,6 @@ placeholder text, not real regulations. Re-running is safe: it stops if the samp
 
 ## Not built yet
 
-- Excel (`.xlsx`) MCQ upload: CSV files and pasted spreadsheet rows work; `.xlsx` is rejected with a clear message.
+- Old Excel `.xls` MCQ upload. The admin UI reads `.xlsx` files in the browser (first sheet, converted to CSV with SheetJS) as well as CSV files and pasted rows; the raw multipart endpoint `POST /api/admin/topics/{id}/mcqs/upload` still takes CSV only.
 - Automated tests in the repo. The UI and API were exercised by hand and with a scripted headless-browser run using
   dev sign-in; real Google sign-in has not been tried locally.
