@@ -235,3 +235,7 @@ textarea.form-control { min-height: 120px; resize: vertical; }
 .displaced .box { max-width: 480px; }
 .displaced p { color: #c7d0f5; font-size: 16px; }
 a.topic { color: inherit; }
+
+/* Admin "Student view" switch and preview banner */
+.view-switch { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.preview-bar { display: flex; align-items: center; gap: 10px; padding: 9px 24px; background: var(--amber-soft); color: #92400e; border-bottom: 1px solid #f3dcb0; flex-shrink: 0; }

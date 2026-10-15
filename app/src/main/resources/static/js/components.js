@@ -224,21 +224,33 @@
 
   // ---- directives ----
 
-  // Reads a chosen file and hands its text to on-file-text="fn(text)". Excel .xlsx files are converted
-  // to CSV text (first sheet) so the server sees the same format as an uploaded or pasted CSV.
+  // Reads a chosen file and hands its text to on-file-text="fn(text, name)". Checks the file type first
+  // (allowed="xlsx,csv,txt") and the size. Excel .xlsx files are converted to CSV text (first sheet) so the
+  // server sees the same format as an uploaded or pasted CSV.
   app.directive('onFileText', function (Toast) {
+    var MAX_BYTES = 10 * 1024 * 1024;
     return {
-      scope: { onFileText: '&' },
+      scope: { onFileText: '&', allowed: '@' },
       link: function (scope, el) {
+        function reject(input, message) {
+          scope.$evalAsync(function () { Toast.show(message, 'error'); });
+          input.value = '';
+        }
         el.on('change', function (e) {
           var input = e.target, f = input.files[0];
           if (!f) return;
-          if (/\.xls$/i.test(f.name)) {
-            scope.$evalAsync(function () { Toast.show('Old .xls files are not supported: save the sheet as .xlsx or CSV', 'error'); });
-            input.value = '';
-            return;
+          var ext = (f.name.indexOf('.') < 0 ? '' : f.name.split('.').pop()).toLowerCase();
+          var allowed = (scope.allowed || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean);
+          if (ext === 'xls') {
+            return reject(input, 'Old .xls files are not supported: save the sheet as .xlsx or CSV');
           }
-          var excel = /\.xlsx$/i.test(f.name);
+          if (allowed.length && allowed.indexOf(ext) < 0) {
+            return reject(input, "'" + f.name + "' is not a supported file type. Use: ." + allowed.join(', .'));
+          }
+          if (f.size > MAX_BYTES) return reject(input, 'That file is larger than 10 MB');
+          if (f.size === 0) return reject(input, 'That file is empty');
+
+          var excel = ext === 'xlsx';
           var r = new FileReader();
           r.onload = function () {
             scope.$evalAsync(function () {
@@ -248,7 +260,7 @@
                   var wb = window.XLSX.read(r.result, { type: 'array' });
                   text = window.XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
                 } catch (err) {
-                  Toast.show('Could not read that Excel file', 'error');
+                  Toast.show('Could not read that Excel file. Is it a valid .xlsx?', 'error');
                   return;
                 }
               } else {
@@ -258,7 +270,7 @@
                 Toast.show('That file has no rows', 'error');
                 return;
               }
-              scope.onFileText({ text: text });
+              scope.onFileText({ text: text, name: f.name });
             });
             input.value = '';
           };

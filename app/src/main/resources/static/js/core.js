@@ -90,6 +90,8 @@
     A.require = function (role) {
       return A.ready.then(function () {
         if (!A.user) return $q.reject({ redirect: '/' });
+        // Admins may open the student screens (the "Student view" preview); students never get the admin ones.
+        if (role === 'STUDENT' && A.user.role === 'ADMIN') return true;
         if ((role === 'ADMIN') !== (A.user.role === 'ADMIN')) return $q.reject({ redirect: A.home() });
         return true;
       });
@@ -104,10 +106,21 @@
   });
 
   // ---- student context: exams, subscriptions, the selected exam stage ----
-  app.factory('Student', function ($q, $rootScope, Api) {
-    var S = { exams: null, subs: null, examId: localStorage.getItem('examId'), examIds: [], best: null, locked: false, loaded: null };
+  app.factory('Student', function ($q, $rootScope, Api, Auth) {
+    var S = { exams: null, subs: null, examId: localStorage.getItem('examId'), examIds: [], best: null, locked: false, loaded: null, preview: false };
 
     S.recompute = function () {
+      // An admin looking at the student screens: every exam is open and there is no paywall.
+      if (Auth.user && Auth.user.role === 'ADMIN') {
+        S.preview = true;
+        S.examIds = S.exams.map(function (e) { return e.id; });
+        if (S.examIds.indexOf(S.examId) < 0) S.examId = S.examIds[0];
+        if (S.examId) localStorage.setItem('examId', S.examId);
+        S.best = null;
+        S.locked = false;
+        return;
+      }
+      S.preview = false;
       var active = (S.subs.subscriptions || []).filter(function (s) { return s.status === 'ACTIVE'; });
       S.examIds = active.map(function (s) { return s.examId; }).filter(function (id, i, a) { return a.indexOf(id) === i; });
       if (S.examIds.indexOf(S.examId) < 0) S.examId = S.examIds[0];
@@ -270,6 +283,9 @@
       return n.end ? p === n.to : p.indexOf(n.to) === 0;
     };
     sh.go = function (p) { $location.path(p); };
+    sh.isAdmin = function () { return !!(Auth.user && Auth.user.role === 'ADMIN'); };
+    // The admin's "Student view" switch: open the student screens, or go back to the console.
+    sh.studentView = function (on) { $location.path(on ? '/app' : '/admin'); };
     sh.logout = function () { sh.menu = false; Auth.logout(); };
 
     $rootScope.$on('$routeChangeSuccess', function (e, cur) {

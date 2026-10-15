@@ -7,7 +7,7 @@
     </rx-card></div>
     <div class="col-md-6"><rx-card heading="Restore a snapshot">
       <p class="muted">Upload a saved backup to restore content.</p>
-      <input type="file" class="form-control" accept=".json" on-file-text="vm.pick(text)">
+      <input type="file" class="form-control" accept=".json" allowed="json" on-file-text="vm.pick(text)">
     </rx-card></div>
   </div>
   <rx-modal ng-if="vm.pending" heading="Restore this snapshot?" on-close="vm.pending = null">

@@ -114,7 +114,7 @@
     };
   });
 
-  app.controller('ContentCtrl', function ($q, Api, Curriculum, Loader, Toast, Util) {
+  app.controller('ContentCtrl', function ($q, $timeout, Api, Curriculum, Loader, Toast, Util) {
     var vm = this;
     vm.tab = 'matrix';
     vm.tabs = [{ value: 'matrix', label: 'Master grid' }, { value: 'ingest', label: 'Ingest content' }];
@@ -177,11 +177,37 @@
         vm.matrix.reload();
       }, fail);
     };
+    // Format check: the server reads the text exactly as the import would, without saving, and reports how.
+    vm.mcqFile = '';
+    vm.check = null;
+    vm.checkError = null;
+    vm.checking = false;
+    var checkTimer;
+    function runCheck() {
+      var text = vm.mcqText;
+      vm.checking = true;
+      Api.post('/api/admin/mcqs/check', { text: text }).then(function (c) {
+        if (text === vm.mcqText) { vm.check = c; vm.checkError = null; }
+      }, function (e) {
+        if (text === vm.mcqText) { vm.check = null; vm.checkError = e.message; }
+      }).finally(function () { vm.checking = false; });
+    }
+    vm.checkMcqs = function (now) {
+      $timeout.cancel(checkTimer);
+      if (!vm.mcqText.trim()) { vm.check = null; vm.checkError = null; vm.mcqFile = ''; return; }
+      checkTimer = $timeout(runCheck, now ? 0 : 500);
+    };
+    vm.setMcqs = function (text, name) { vm.mcqText = text; vm.mcqFile = name || ''; vm.checkMcqs(true); };
+    vm.canUpload = function () {
+      return !!(vm.sel.topic && vm.check && vm.check.valid > 0 && !vm.checking && !vm.checkError);
+    };
+    vm.answerText = function (p) { return p['option' + p.correct]; };
+
     vm.uploadMcqs = function (mode) {
       Api.post('/api/admin/topics/' + vm.sel.topic.id + '/mcqs?mode=' + mode, { text: vm.mcqText }).then(function (r) {
         vm.report = r;
         Toast.show(r.added + ' question(s) saved', r.added ? 'success' : 'error');
-        if (r.added) { vm.mcqText = ''; vm.matrix.reload(); }
+        if (r.added) { vm.mcqText = ''; vm.mcqFile = ''; vm.check = null; vm.matrix.reload(); }
       }, fail);
     };
     vm.dictFile = function (text) {

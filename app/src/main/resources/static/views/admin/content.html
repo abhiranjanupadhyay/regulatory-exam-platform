@@ -37,7 +37,7 @@
           <div class="col-lg-6">
             <rx-card heading="Upload book">
               <card-actions><span class="rb brand">.md / .txt</span></card-actions>
-              <input type="file" class="form-control mb-2" accept=".md,.txt" on-file-text="vm.bookText = text">
+              <input type="file" class="form-control mb-2" accept=".md,.txt" allowed="md,txt" on-file-text="vm.bookText = text">
               <textarea class="form-control" placeholder="…or paste the statutory handbook text (Markdown)" ng-model="vm.bookText"></textarea>
               <button class="btn btn-primary mt-3" ng-disabled="!vm.sel.topic || !vm.bookText.trim()" ng-click="vm.publishBook()"><i class="bi bi-book me-1"></i>Publish book</button>
             </rx-card>
@@ -45,15 +45,46 @@
           <div class="col-lg-6">
             <rx-card heading="Upload MCQs">
               <card-actions><span class="rb brand">.xlsx / .csv or pasted rows</span></card-actions>
-              <input type="file" class="form-control mb-2" accept=".xlsx,.csv,.txt" on-file-text="vm.mcqText = text">
-              <textarea class="form-control" placeholder="{{vm.sample}}" ng-model="vm.mcqText"></textarea>
-              <div class="d-flex gap-2 mt-3">
-                <button class="btn btn-primary" ng-disabled="!vm.sel.topic || !vm.mcqText.trim()" ng-click="vm.uploadMcqs('ADD')"><i class="bi bi-upload me-1"></i>Add questions</button>
-                <button class="btn btn-light" ng-disabled="!vm.sel.topic || !vm.mcqText.trim()" ng-click="vm.uploadMcqs('REPLACE')"><i class="bi bi-upload me-1"></i>Replace all</button>
+              <p class="small muted mb-2">Columns are matched by their header names (Question, Option A–D, Answer, Explanation, Citation), in any order. Other columns are ignored.</p>
+              <input type="file" class="form-control mb-2" accept=".xlsx,.csv,.txt" allowed="xlsx,csv,txt" on-file-text="vm.setMcqs(text, name)">
+              <textarea class="form-control" placeholder="{{vm.sample}}" ng-model="vm.mcqText" ng-change="vm.checkMcqs()"></textarea>
+
+              <div class="small muted mt-2" ng-if="vm.checking"><span class="spinner-border spinner-border-sm me-1"></span>Checking the format…</div>
+              <div class="alert alert-danger mt-3 mb-0" ng-if="vm.checkError"><b>Format problem.</b> {{vm.checkError}}</div>
+
+              <div class="mt-3" ng-if="vm.check && !vm.checkError">
+                <div class="alert mb-2" ng-class="vm.check.valid ? (vm.check.skipped ? 'alert-warning' : 'alert-success') : 'alert-danger'">
+                  <b>{{vm.mcqFile || 'Pasted rows'}}</b>: {{vm.check.rows}} rows read ·
+                  <b>{{vm.check.valid}} ready to import</b><span ng-if="vm.check.skipped"> · {{vm.check.skipped}} will be skipped</span>
+                </div>
+                <div class="small mb-2">
+                  <div class="fw-semibold mb-1">Columns matched</div>
+                  <div class="d-flex flex-wrap gap-1">
+                    <span class="rb green" ng-repeat="m in vm.check.mapped">{{m.field}} ← {{m.header}}</span>
+                    <span class="rb amber" ng-if="!vm.check.headerDetected">No header row: using the default order (Question, A, B, C, D, Answer, Explanation, Citation)</span>
+                  </div>
+                  <div class="mt-2 muted" ng-if="vm.check.ignored.length">Ignored columns: {{vm.check.ignored.join(', ')}}</div>
+                </div>
+                <div class="alert alert-info small py-2 mb-2" ng-if="vm.check.chapterCount > 1">
+                  This file covers <b>{{vm.check.chapterCount}} chapters</b> ({{vm.check.chapters.join('; ')}}). All {{vm.check.valid}} questions will be added to the topic selected above.
+                </div>
+                <div class="alert alert-warning small py-2 mb-2" ng-if="vm.check.errors.length">
+                  <b>{{vm.check.skipped}} row(s) will be skipped</b>
+                  <ul class="mb-0 mt-1 ps-3"><li ng-repeat="e in vm.check.errors | limitTo: 8">{{e}}</li></ul>
+                </div>
+                <div class="small" ng-if="vm.check.preview.length">
+                  <div class="fw-semibold mb-1">First questions as they will be saved</div>
+                  <div class="border rounded p-2 mb-1" ng-repeat="p in vm.check.preview">
+                    {{$index + 1}}. {{p.question | limitTo: 140}}<span ng-if="p.question.length > 140">…</span><br>
+                    <span class="muted">Answer: <b>{{p.correct}}</b> — {{vm.answerText(p) | limitTo: 80}}</span>
+                  </div>
+                </div>
               </div>
-              <div class="alert alert-warning mt-3 mb-0" ng-if="vm.report.errors.length">
-                <b>{{vm.report.skipped}} row(s) skipped</b>
-                <ul class="mb-0 mt-1 ps-3"><li ng-repeat="e in vm.report.errors | limitTo: 8">{{e}}</li></ul>
+
+              <div class="small muted mt-3" ng-if="vm.check && vm.check.valid && !vm.sel.topic">Choose an exam, paper and topic above to enable the upload.</div>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-primary" ng-disabled="!vm.canUpload()" ng-click="vm.uploadMcqs('ADD')"><i class="bi bi-upload me-1"></i>Add questions</button>
+                <button class="btn btn-light" ng-disabled="!vm.canUpload()" ng-click="vm.uploadMcqs('REPLACE')"><i class="bi bi-upload me-1"></i>Replace all</button>
               </div>
             </rx-card>
           </div>
@@ -62,7 +93,7 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Bulk upload (.json: [{word, definition, translation, legalContext}])</label>
-              <input type="file" class="form-control" accept=".json" on-file-text="vm.dictFile(text)">
+              <input type="file" class="form-control" accept=".json" allowed="json" on-file-text="vm.dictFile(text)">
               <div class="alert alert-info mt-2 mb-0" ng-if="vm.dictReport">{{vm.dictReport.added}} added · {{vm.dictReport.skipped}} duplicates skipped</div>
             </div>
             <div class="col-md-6">

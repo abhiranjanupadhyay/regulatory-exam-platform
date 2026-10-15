@@ -158,6 +158,13 @@ public class ContentController {
         return service.ingestMcqs(topicId, body.text(), "REPLACE".equalsIgnoreCase(mode));
     }
 
+    /** Dry run: tells the admin how an upload will be read (column matching, row problems) without saving. */
+    @PostMapping("/admin/mcqs/check")
+    public ContentService.McqCheck checkMcqs(UserContext user, @RequestBody TextBody body) {
+        user.requireAdmin();
+        return service.checkMcqs(body.text());
+    }
+
     @PostMapping("/admin/topics/{topicId}/mcqs/upload")
     public ContentService.IngestReport uploadMcqs(UserContext user, @PathVariable String topicId,
                                                   @RequestParam(defaultValue = "ADD") String mode,
@@ -166,7 +173,7 @@ public class ContentController {
         String name = String.valueOf(file.getOriginalFilename()).toLowerCase(Locale.ROOT);
         if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
             throw new ApiException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-                    "Excel files are not supported yet: save the sheet as CSV or paste the rows");
+                    "Excel files are read in the browser: pick the .xlsx on the Ingest screen, or upload it here saved as CSV");
         }
         return service.ingestMcqs(topicId, new String(file.getBytes(), StandardCharsets.UTF_8),
                 "REPLACE".equalsIgnoreCase(mode));

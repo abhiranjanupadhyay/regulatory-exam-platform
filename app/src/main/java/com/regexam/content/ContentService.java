@@ -6,9 +6,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,6 +36,26 @@ public class ContentService {
     }
 
     public record IngestReport(int added, int skipped, List<String> errors) {
+    }
+
+    /** One matched column of an MCQ upload: which of our fields it feeds and the header it was found under. */
+    public record ColumnMatch(String field, String header) {
+    }
+
+    public record McqPreview(String question, String optionA, String optionB, String optionC, String optionD,
+                             String correct) {
+    }
+
+    /**
+     * What an MCQ upload looks like to the importer, without saving anything: how the columns were matched,
+     * which were ignored, how many rows are usable, and the first problems.
+     */
+    public record McqCheck(int rows, int valid, int skipped, boolean headerDetected, List<ColumnMatch> mapped,
+                           List<String> ignored, int chapterCount, List<String> chapters, List<String> errors,
+                           List<McqPreview> preview) {
+    }
+
+    private record ParsedMcqs(List<Mcq> mcqs, McqCheck check) {
     }
 
     /** Includes the answer: only ever returned by internal endpoints. */
@@ -100,51 +123,185 @@ public class ContentService {
         return books.save(book);
     }
 
+    private static final int MAX_REPORTED_ERRORS = 50;
+
+    /** Header names (lower-case, letters and digits only) that each MCQ field is recognised by. */
+    private static final Map<String, Set<String>> MCQ_HEADERS = new LinkedHashMap<>();
+    private static final Map<String, String> MCQ_LABELS = new LinkedHashMap<>();
+
+    static {
+        MCQ_HEADERS.put("question", Set.of("question", "questionstem", "stem", "questiontext", "mcq"));
+        MCQ_HEADERS.put("optionA", Set.of("optiona", "a", "choicea", "answera"));
+        MCQ_HEADERS.put("optionB", Set.of("optionb", "b", "choiceb", "answerb"));
+        MCQ_HEADERS.put("optionC", Set.of("optionc", "c", "choicec", "answerc"));
+        MCQ_HEADERS.put("optionD", Set.of("optiond", "d", "choiced", "answerd"));
+        MCQ_HEADERS.put("correct", Set.of("correctanswer", "answer", "correct", "correctoption", "key", "ans",
+                "rightanswer"));
+        MCQ_HEADERS.put("explanation", Set.of("explanation", "rationale", "solution", "answerexplanation"));
+        MCQ_HEADERS.put("citation", Set.of("paragraphcitation", "relevantpara", "relevantparagraph", "citation",
+                "reference", "para", "paragraph", "source"));
+        MCQ_LABELS.put("question", "Question");
+        MCQ_LABELS.put("optionA", "Option A");
+        MCQ_LABELS.put("optionB", "Option B");
+        MCQ_LABELS.put("optionC", "Option C");
+        MCQ_LABELS.put("optionD", "Option D");
+        MCQ_LABELS.put("correct", "Correct answer");
+        MCQ_LABELS.put("explanation", "Explanation");
+        MCQ_LABELS.put("citation", "Citation");
+    }
+
+    private static final List<String> REQUIRED_FIELDS =
+            List.of("question", "optionA", "optionB", "optionC", "optionD", "correct");
+    private static final Set<String> CHAPTER_HEADERS = Set.of("chapter", "chapterrule", "chaptertitle", "topic");
+
+    private static String headerKey(String header) {
+        return header.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    }
+
     /**
-     * Columns: Question, Option A-D, Correct Answer, Explanation, Citation. In replace mode the old questions
-     * are only removed when at least one row is valid, so a bad upload cannot wipe a topic.
+     * Columns are matched by header name, so their order does not matter and extra columns (serial number,
+     * book title, difficulty...) are ignored. Without a recognisable header row the old fixed order is used:
+     * Question, Option A-D, Correct Answer, Explanation, Citation.
      */
-    public IngestReport ingestMcqs(String topicId, String text, boolean replace) {
-        topics.findById(topicId).orElseThrow(() -> notFound("Topic"));
+    private ParsedMcqs parseMcqs(String text) {
         List<List<String>> rows = Csv.parse(text);
-        if (!rows.isEmpty() && rows.get(0).get(0).equalsIgnoreCase("question")) {
-            rows = rows.subList(1, rows.size());
+        Map<String, Integer> col = new LinkedHashMap<>();
+        List<ColumnMatch> mapped = new ArrayList<>();
+        List<String> ignored = new ArrayList<>();
+        int chapterCol = -1;
+        int firstDataRow = 1;
+        boolean header = false;
+
+        if (!rows.isEmpty()) {
+            List<String> head = rows.get(0);
+            for (Map.Entry<String, Set<String>> f : MCQ_HEADERS.entrySet()) {
+                for (int i = 0; i < head.size(); i++) {
+                    if (f.getValue().contains(headerKey(head.get(i))) && !col.containsValue(i)) {
+                        col.put(f.getKey(), i);
+                        break;
+                    }
+                }
+            }
+            for (int i = 0; i < head.size() && chapterCol < 0; i++) {
+                if (CHAPTER_HEADERS.contains(headerKey(head.get(i))) && !col.containsValue(i)) {
+                    chapterCol = i;
+                }
+            }
+            long requiredFound = REQUIRED_FIELDS.stream().filter(col::containsKey).count();
+            if (requiredFound >= 3) {
+                header = true;
+                List<String> missing = REQUIRED_FIELDS.stream().filter(f -> !col.containsKey(f))
+                        .map(MCQ_LABELS::get).toList();
+                if (!missing.isEmpty()) {
+                    throw new ApiException(HttpStatus.BAD_REQUEST, "Missing column(s): " + String.join(", ", missing)
+                            + ". Columns found in the file: " + String.join(", ", head)
+                            + ". Name the columns Question, Option A, Option B, Option C, Option D, Correct Answer"
+                            + " (Explanation and Citation are optional).");
+                }
+            }
         }
+        if (header) {
+            List<String> head = rows.get(0);
+            col.forEach((field, i) -> mapped.add(new ColumnMatch(MCQ_LABELS.get(field), head.get(i))));
+            for (int i = 0; i < head.size(); i++) {
+                if (!col.containsValue(i) && !head.get(i).isBlank()) {
+                    ignored.add(head.get(i));
+                }
+            }
+            rows = rows.subList(1, rows.size());
+            firstDataRow = 2;
+        } else {
+            // Legacy fixed order, with or without a header line.
+            String[] order = {"question", "optionA", "optionB", "optionC", "optionD", "correct", "explanation",
+                "citation"};
+            for (int i = 0; i < order.length; i++) {
+                col.put(order[i], i);
+            }
+            if (!rows.isEmpty() && rows.get(0).get(0).equalsIgnoreCase("question")) {
+                rows = rows.subList(1, rows.size());
+                firstDataRow = 2;
+            }
+        }
+
         List<Mcq> parsed = new ArrayList<>();
         List<String> errors = new ArrayList<>();
-        int rowNo = 1;
+        Set<String> chapters = new LinkedHashSet<>();
+        int skipped = 0;
+        int fileRow = firstDataRow - 1;
         for (List<String> r : rows) {
-            rowNo++;
-            if (r.size() < 6 || r.subList(0, 6).stream().anyMatch(String::isBlank)) {
-                errors.add("Row " + rowNo + ": needs question, four options and a correct answer");
+            fileRow++;
+            String q = cell(r, col.get("question"));
+            String a = cell(r, col.get("optionA"));
+            String b = cell(r, col.get("optionB"));
+            String c = cell(r, col.get("optionC"));
+            String d = cell(r, col.get("optionD"));
+            String rawAnswer = cell(r, col.get("correct"));
+            String chapter = chapterCol >= 0 ? cell(r, chapterCol) : "";
+            if (!chapter.isBlank()) {
+                chapters.add(chapter);
+            }
+            String label = "Row " + fileRow;
+            if (q.isBlank() || a.isBlank() || b.isBlank() || c.isBlank() || d.isBlank() || rawAnswer.isBlank()) {
+                skipped++;
+                addError(errors, label + ": needs a question, four options and a correct answer");
                 continue;
             }
-            String correct = normalizeAnswer(r.get(5), r.subList(1, 5));
+            String correct = normalizeAnswer(rawAnswer, List.of(a, b, c, d));
             if (correct == null) {
-                errors.add("Row " + rowNo + ": correct answer '" + r.get(5) + "' is not A, B, C or D");
+                skipped++;
+                addError(errors, label + ": correct answer '" + rawAnswer + "' is not A, B, C or D");
                 continue;
             }
             Mcq m = new Mcq();
-            m.setTopicId(topicId);
-            m.setQuestion(r.get(0));
-            m.setOptionA(r.get(1));
-            m.setOptionB(r.get(2));
-            m.setOptionC(r.get(3));
-            m.setOptionD(r.get(4));
+            m.setQuestion(q);
+            m.setOptionA(a);
+            m.setOptionB(b);
+            m.setOptionC(c);
+            m.setOptionD(d);
             m.setCorrect(correct);
-            m.setExplanation(r.size() > 6 ? r.get(6) : "");
-            m.setCitation(r.size() > 7 ? r.get(7) : "");
+            m.setExplanation(cell(r, col.get("explanation")));
+            m.setCitation(cell(r, col.get("citation")));
             parsed.add(m);
         }
-        if (replace && !parsed.isEmpty()) {
-            mcqs.deleteAll(mcqs.findByTopicId(topicId));
-        }
-        mcqs.saveAll(parsed);
-        return new IngestReport(parsed.size(), errors.size(), errors);
+        List<McqPreview> preview = parsed.stream().limit(3).map(m -> new McqPreview(m.getQuestion(),
+                m.getOptionA(), m.getOptionB(), m.getOptionC(), m.getOptionD(), m.getCorrect())).toList();
+        McqCheck check = new McqCheck(rows.size(), parsed.size(), skipped, header, mapped, ignored, chapters.size(),
+                chapters.stream().limit(12).toList(), errors, preview);
+        return new ParsedMcqs(parsed, check);
     }
 
+    private static void addError(List<String> errors, String message) {
+        if (errors.size() < MAX_REPORTED_ERRORS) {
+            errors.add(message);
+        }
+    }
+
+    private static String cell(List<String> row, Integer index) {
+        return index == null || index < 0 || index >= row.size() ? "" : row.get(index);
+    }
+
+    /** Dry run of an MCQ upload: reads the text exactly as the import would, but saves nothing. */
+    public McqCheck checkMcqs(String text) {
+        return parseMcqs(text).check();
+    }
+
+    /** In replace mode the old questions are only removed when at least one row is valid, so a bad upload cannot wipe a topic. */
+    public IngestReport ingestMcqs(String topicId, String text, boolean replace) {
+        topics.findById(topicId).orElseThrow(() -> notFound("Topic"));
+        ParsedMcqs p = parseMcqs(text);
+        p.mcqs().forEach(m -> m.setTopicId(topicId));
+        if (replace && !p.mcqs().isEmpty()) {
+            mcqs.deleteAll(mcqs.findByTopicId(topicId));
+        }
+        mcqs.saveAll(p.mcqs());
+        return new IngestReport(p.mcqs().size(), p.check().skipped(), p.check().errors());
+    }
+
+    /** Accepts "B", "b", "(B)", "B.", "Option B", "Answer: B", a number 1-4, or the text of the right option. */
     private static String normalizeAnswer(String raw, List<String> options) {
-        String a = raw.trim().toUpperCase(Locale.ROOT);
+        String a = raw.trim().toUpperCase(Locale.ROOT)
+                .replaceFirst("^(OPTION|OPT|ANSWER|ANS|CHOICE)\\b[\\s:.\\-]*", "")
+                .replaceAll("[()\\[\\].:\\s]", "");
         if (a.matches("[A-D]")) {
             return a;
         }

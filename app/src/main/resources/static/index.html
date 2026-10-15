@@ -58,10 +58,15 @@
 
       <span class="rb brand" ng-if="sh.mode === 'admin'"><i class="bi bi-person-badge me-1"></i>Administrator</span>
 
+      <label class="view-switch" ng-if="sh.isAdmin()" title="See the app the way a student sees it">
+        <rx-toggle on="sh.mode === 'student'" on-change="sh.studentView(v)"></rx-toggle>Student view
+      </label>
+
       <select class="form-select w-auto" title="Exam stage" ng-if="sh.mode === 'student' && sh.student.examIds.length"
               ng-model="sh.student.examId" ng-change="sh.student.setExam(sh.student.examId)"
               ng-options="id as sh.student.examName(id) for id in sh.student.examIds"></select>
-      <button class="validity" ng-if="sh.mode === 'student'" ng-class="{none: !sh.student.best, warn: sh.student.best.expiringSoon}"
+      <span class="rb amber" ng-if="sh.mode === 'student' && sh.student.preview"><i class="bi bi-eye me-1"></i>Preview</span>
+      <button class="validity" ng-if="sh.mode === 'student' && !sh.student.preview" ng-class="{none: !sh.student.best, warn: sh.student.best.expiringSoon}"
               ng-click="sh.go('/app/plans')" title="Renew or change plan">
         <i class="bi bi-calendar-check"></i>{{sh.student.best ? sh.student.best.daysRemaining + ' days remaining' : 'No active plan'}}
       </button>
@@ -69,11 +74,17 @@
         <button class="avatar" ng-click="sh.menu = !sh.menu">{{sh.auth.user.name.charAt(0).toUpperCase()}}</button>
         <div class="user-menu" ng-if="sh.menu">
           <div class="px-3 py-2"><b>{{sh.auth.user.name}}</b><div class="small muted">{{sh.auth.user.email}}</div></div>
+          <button class="item" ng-if="sh.isAdmin()" ng-click="sh.menu = false; sh.go('/admin')"><i class="bi bi-arrow-left-circle"></i>Back to admin console</button>
           <button class="item" ng-click="sh.menu = false; sh.go('/app/profile')"><i class="bi bi-person"></i>View profile</button>
           <button class="item" ng-click="sh.logout()"><i class="bi bi-box-arrow-right"></i>Log out</button>
         </div>
       </div>
     </header>
+    <div class="preview-bar" ng-if="sh.mode === 'student' && sh.student.preview">
+      <i class="bi bi-eye"></i>
+      <span><b>Student view.</b> This is what a student sees. Answers and tests you submit here are saved to your admin account.</span>
+      <button class="btn btn-sm btn-light ms-auto" ng-click="sh.studentView(false)">Back to admin console</button>
+    </div>
     <div class="content" ng-view></div>
   </div>
 </div>
