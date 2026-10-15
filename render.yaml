@@ -10,13 +10,11 @@ services:
   - type: pserv
     name: user-service
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./docker/user-service.Dockerfile
     dockerContext: .
     buildFilter:
       paths: ["common/**", "user-service/**", "pom.xml"]
     envVars:
-      - key: MODULE
-        value: user-service
       - key: PORT
         value: "10000"
       - key: DB_URL
@@ -38,13 +36,11 @@ services:
   - type: pserv
     name: subscription-service
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./docker/subscription-service.Dockerfile
     dockerContext: .
     buildFilter:
       paths: ["common/**", "subscription-service/**", "pom.xml"]
     envVars:
-      - key: MODULE
-        value: subscription-service
       - key: PORT
         value: "10000"
       - key: DB_URL
@@ -64,13 +60,11 @@ services:
   - type: pserv
     name: content-service
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./docker/content-service.Dockerfile
     dockerContext: .
     buildFilter:
       paths: ["common/**", "content-service/**", "pom.xml"]
     envVars:
-      - key: MODULE
-        value: content-service
       - key: PORT
         value: "10000"
       - key: DB_URL
@@ -90,13 +84,11 @@ services:
   - type: pserv
     name: assessment-service
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./docker/assessment-service.Dockerfile
     dockerContext: .
     buildFilter:
       paths: ["common/**", "assessment-service/**", "pom.xml"]
     envVars:
-      - key: MODULE
-        value: assessment-service
       - key: PORT
         value: "10000"
       - key: DB_URL
@@ -116,14 +108,12 @@ services:
   - type: web
     name: api-gateway
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./docker/api-gateway.Dockerfile
     dockerContext: .
     buildFilter:
       paths: ["common/**", "api-gateway/**", "pom.xml"]
     healthCheckPath: /actuator/health
     envVars:
-      - key: MODULE
-        value: api-gateway
       - key: PORT
         value: "10000"
       - key: JWT_SECRET
