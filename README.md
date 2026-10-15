@@ -56,6 +56,18 @@ First run: start the services with `GOOGLE_DEV_MODE=true ADMIN_EMAILS=you@exampl
 (it becomes the admin), then create an exam, papers, topics, a payment config and a plan under the admin console.
 Generate an invite code to register a student.
 
+### Demo data
+
+With the services running (`GOOGLE_DEV_MODE=true`, `ADMIN_EMAILS=you@example.com`):
+
+```bash
+ADMIN_EMAIL=you@example.com node scripts/seed.mjs
+```
+
+Creates a sample exam with two papers, four topics across all three tiers (sample books and 5 questions each),
+a small dictionary, two plans, payment settings, the tier policy and three invite codes. The content is
+placeholder text, not real regulations. Re-running is safe: it stops if the sample exam already exists.
+
 ## How the PRD maps to the services
 
 - **Invite gate, Google auth, safeguards**: `POST /api/auth/invite/validate`, `/register`, `/login`. Login of an
@@ -77,6 +89,7 @@ Generate an invite code to register a student.
 
 ## Not built yet
 
+- The seed script has only been syntax-checked, not run against live services.
 - Visual and end-to-end checks of the UI against running services (the frontend builds, but has not been browsed).
 - Excel (`.xlsx`) MCQ upload: CSV files and pasted spreadsheet rows work; `.xlsx` is rejected with a clear message.
 - Automated tests, and a runtime check against a live Neo4j (the code compiles; it has not been booted).
