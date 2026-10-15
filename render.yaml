@@ -1,0 +1,158 @@
+# Render blueprint. Postgres is external (Neon): enter DB_URL (jdbc:postgresql://<host>/<db>?sslmode=require), DB_USER, DB_PASSWORD when Render prompts.
+# Backend services are private; only the gateway is public. The static site proxies /api to the gateway.
+envVarGroups:
+  - name: shared
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+
+services:
+  - type: pserv
+    name: user-service
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildFilter:
+      paths: ["common/**", "user-service/**", "pom.xml"]
+    envVars:
+      - key: MODULE
+        value: user-service
+      - key: PORT
+        value: "10000"
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        fromGroup: shared
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: GOOGLE_DEV_MODE
+        value: "false"
+      - key: PUBLIC_URL
+        sync: false
+  - type: pserv
+    name: subscription-service
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildFilter:
+      paths: ["common/**", "subscription-service/**", "pom.xml"]
+    envVars:
+      - key: MODULE
+        value: subscription-service
+      - key: PORT
+        value: "10000"
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: USER_SERVICE_URL
+        value: http://user-service:10000
+      - key: SUBSCRIPTION_SERVICE_URL
+        value: http://subscription-service:10000
+      - key: CONTENT_SERVICE_URL
+        value: http://content-service:10000
+      - key: ASSESSMENT_SERVICE_URL
+        value: http://assessment-service:10000
+  - type: pserv
+    name: content-service
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildFilter:
+      paths: ["common/**", "content-service/**", "pom.xml"]
+    envVars:
+      - key: MODULE
+        value: content-service
+      - key: PORT
+        value: "10000"
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: USER_SERVICE_URL
+        value: http://user-service:10000
+      - key: SUBSCRIPTION_SERVICE_URL
+        value: http://subscription-service:10000
+      - key: CONTENT_SERVICE_URL
+        value: http://content-service:10000
+      - key: ASSESSMENT_SERVICE_URL
+        value: http://assessment-service:10000
+  - type: pserv
+    name: assessment-service
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildFilter:
+      paths: ["common/**", "assessment-service/**", "pom.xml"]
+    envVars:
+      - key: MODULE
+        value: assessment-service
+      - key: PORT
+        value: "10000"
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: USER_SERVICE_URL
+        value: http://user-service:10000
+      - key: SUBSCRIPTION_SERVICE_URL
+        value: http://subscription-service:10000
+      - key: CONTENT_SERVICE_URL
+        value: http://content-service:10000
+      - key: ASSESSMENT_SERVICE_URL
+        value: http://assessment-service:10000
+  - type: web
+    name: api-gateway
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    buildFilter:
+      paths: ["common/**", "api-gateway/**", "pom.xml"]
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: MODULE
+        value: api-gateway
+      - key: PORT
+        value: "10000"
+      - key: JWT_SECRET
+        fromGroup: shared
+      - key: USER_SERVICE_URL
+        value: http://user-service:10000
+      - key: SUBSCRIPTION_SERVICE_URL
+        value: http://subscription-service:10000
+      - key: CONTENT_SERVICE_URL
+        value: http://content-service:10000
+      - key: ASSESSMENT_SERVICE_URL
+        value: http://assessment-service:10000
+
+  - type: web
+    name: regexam-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      - key: VITE_DEV_LOGIN
+        value: "false"
+    routes:
+      # Replace api-gateway.onrender.com with your gateway's actual onrender.com URL after first deploy.
+      - type: rewrite
+        source: /api/*
+        destination: https://api-gateway.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html

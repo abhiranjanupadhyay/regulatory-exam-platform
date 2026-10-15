@@ -6,8 +6,12 @@ import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 final class Models {
     private Models() {
@@ -15,7 +19,8 @@ final class Models {
 }
 
 /** Latest practice outcome of one student on one question (id = userId:mcqId). */
-@Node("PracticeRecord")
+@Entity
+@Table(name = "practice_record")
 @Getter
 @Setter
 class PracticeRecord {
@@ -29,7 +34,8 @@ class PracticeRecord {
     private Instant answeredAt = Instant.now();
 }
 
-@Node("TestAttempt")
+@Entity
+@Table(name = "test_attempt")
 @Getter
 @Setter
 class TestAttempt {
@@ -49,9 +55,17 @@ class TestAttempt {
     /** IN_PROGRESS or SUBMITTED. */
     private String status = "IN_PROGRESS";
     // Parallel lists, one entry per question. "" in responses means unanswered.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private List<String> questionIds = new ArrayList<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private List<String> topicIds = new ArrayList<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private List<String> answerKey = new ArrayList<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private List<String> responses = new ArrayList<>();
     private int correctCount;
     private int wrongCount;
@@ -63,7 +77,8 @@ class TestAttempt {
 }
 
 /** Singleton policy node (fixed id). */
-@Node("TierPolicy")
+@Entity
+@Table(name = "tier_policy")
 @Getter
 @Setter
 class TierPolicy {
@@ -80,7 +95,8 @@ class TierPolicy {
     private boolean universalOverride;
 }
 
-@Node("TierUnlock")
+@Entity
+@Table(name = "tier_unlock")
 @Getter
 @Setter
 class TierUnlock {
@@ -93,7 +109,8 @@ class TierUnlock {
     private Instant unlockedAt = Instant.now();
 }
 
-@Node("Ticket")
+@Entity
+@Table(name = "ticket")
 @Getter
 @Setter
 class Ticket {
@@ -102,11 +119,15 @@ class Ticket {
     private String userId;
     private String userEmail;
     private String mcqId;
+    @Column(columnDefinition = "text")
     private String question;
+    @Column(columnDefinition = "text")
     private String citation;
+    @Column(columnDefinition = "text")
     private String remarks;
     /** OPEN, RESOLVED or REJECTED. */
     private String status = "OPEN";
+    @Column(columnDefinition = "text")
     private String adminReply;
     private Instant createdAt = Instant.now();
     private Instant resolvedAt;

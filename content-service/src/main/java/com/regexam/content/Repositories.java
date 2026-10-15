@@ -2,25 +2,25 @@ package com.regexam.content;
 
 import java.util.Collection;
 import java.util.List;
-import org.springframework.data.neo4j.repository.Neo4jRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-interface ExamRepository extends Neo4jRepository<Exam, String> {
+interface ExamRepository extends JpaRepository<Exam, String> {
 }
 
-interface PaperRepository extends Neo4jRepository<Paper, String> {
+interface PaperRepository extends JpaRepository<Paper, String> {
     List<Paper> findByExamId(String examId);
 }
 
-interface TopicRepository extends Neo4jRepository<Topic, String> {
+interface TopicRepository extends JpaRepository<Topic, String> {
     List<Topic> findByPaperId(String paperId);
 
     List<Topic> findByPaperIdIn(Collection<String> paperIds);
 }
 
-interface BookRepository extends Neo4jRepository<Book, String> {
+interface BookRepository extends JpaRepository<Book, String> {
 }
 
-interface McqRepository extends Neo4jRepository<Mcq, String> {
+interface McqRepository extends JpaRepository<Mcq, String> {
     List<Mcq> findByTopicId(String topicId);
 
     List<Mcq> findByTopicIdIn(Collection<String> topicIds);
@@ -28,5 +28,5 @@ interface McqRepository extends Neo4jRepository<Mcq, String> {
     long countByTopicId(String topicId);
 }
 
-interface DictionaryRepository extends Neo4jRepository<DictionaryEntry, String> {
+interface DictionaryRepository extends JpaRepository<DictionaryEntry, String> {
 }

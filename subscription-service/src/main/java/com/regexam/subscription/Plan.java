@@ -5,10 +5,15 @@ import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-@Node("Plan")
+@Entity
+@Table(name = "plan")
 @Getter
 @Setter
 public class Plan {
@@ -18,6 +23,8 @@ public class Plan {
     private String examId;
     private long priceInr;
     private int durationDays;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private List<String> features = new ArrayList<>();
     private boolean active = true;
 }

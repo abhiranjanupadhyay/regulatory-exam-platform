@@ -4,10 +4,13 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-@Node("Subscription")
+@Entity
+@Table(name = "subscription")
 @Getter
 @Setter
 public class Subscription {
@@ -29,5 +32,6 @@ public class Subscription {
     private Instant activatedAt;
     private Instant expiresAt;
     private Instant frozenAt;
+    @Column(columnDefinition = "text")
     private String adminNote;
 }

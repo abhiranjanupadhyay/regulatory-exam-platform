@@ -1,13 +1,14 @@
 services:
-  neo4j:
-    image: neo4j:5-community
+  postgres:
+    image: postgres:16
     ports:
-      - "7474:7474"   # browser
-      - "7687:7687"   # bolt
+      - "5432:5432"
     environment:
-      NEO4J_AUTH: neo4j/password
+      POSTGRES_DB: regexam
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
     volumes:
-      - neo4j-data:/data
+      - pg-data:/var/lib/postgresql/data
 
 volumes:
-  neo4j-data:
+  pg-data:

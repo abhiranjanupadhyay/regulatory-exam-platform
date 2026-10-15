@@ -1,7 +1,7 @@
 # Regulatory Exam Platform
 
 Invite-only study and mock-test platform for regulatory examinations (e.g. SAS Part I / II).
-Spring Boot 3.3 / Java 17 microservices on Neo4j.
+Spring Boot 3.3 / Java 17 microservices on Postgres.
 
 | Module | Port | Responsibility |
 |---|---|---|
@@ -15,7 +15,7 @@ Spring Boot 3.3 / Java 17 microservices on Neo4j.
 ## Run
 
 ```bash
-docker compose up -d neo4j        # bolt://localhost:7687, neo4j/password
+docker compose up -d postgres     # localhost:5432, db regexam, postgres/password
 mvn clean package
 # one terminal per service, e.g.
 GOOGLE_DEV_MODE=true ADMIN_EMAILS=you@example.com java -jar user-service/target/user-service-1.0.0-SNAPSHOT.jar
@@ -27,7 +27,7 @@ java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 
 Clients talk only to the gateway (`:8080`). `/api/internal/**` is blocked there.
 
-Configuration (env vars): `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, `JWT_SECRET` (same value for
+Configuration (env vars): `DB_URL` (JDBC, e.g. `jdbc:postgresql://host/db?sslmode=require` for Neon), `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` (same value for
 gateway and user-service, 32+ chars), `GOOGLE_CLIENT_ID`, `ADMIN_EMAILS` (comma separated),
 `GOOGLE_DEV_MODE`, `PUBLIC_URL`, and the `*_SERVICE_URL` variables for service-to-service calls.
 
@@ -92,5 +92,5 @@ placeholder text, not real regulations. Re-running is safe: it stops if the samp
 - The seed script has only been syntax-checked, not run against live services.
 - Visual and end-to-end checks of the UI against running services (the frontend builds, but has not been browsed).
 - Excel (`.xlsx`) MCQ upload: CSV files and pasted spreadsheet rows work; `.xlsx` is rejected with a clear message.
-- Automated tests, and a runtime check against a live Neo4j (the code compiles; it has not been booted).
-- All services share one Neo4j database (Community edition allows one) and keep to their own node labels.
+- Automated tests, and a runtime check against a live Postgres.
+- All services share one Postgres database and keep to their own tables.

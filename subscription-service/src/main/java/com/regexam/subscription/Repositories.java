@@ -1,14 +1,14 @@
 package com.regexam.subscription;
 
 import java.util.List;
-import org.springframework.data.neo4j.repository.Neo4jRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-interface PlanRepository extends Neo4jRepository<Plan, String> {
+interface PlanRepository extends JpaRepository<Plan, String> {
 }
 
-interface PaymentConfigRepository extends Neo4jRepository<PaymentConfig, String> {
+interface PaymentConfigRepository extends JpaRepository<PaymentConfig, String> {
 }
 
-interface SubscriptionRepository extends Neo4jRepository<Subscription, String> {
+interface SubscriptionRepository extends JpaRepository<Subscription, String> {
     List<Subscription> findByUserId(String userId);
 }

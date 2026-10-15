@@ -2,11 +2,13 @@ package com.regexam.subscription;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /** Singleton settings node (fixed id). */
-@Node("PaymentConfig")
+@Entity
+@Table(name = "payment_config")
 @Getter
 @Setter
 public class PaymentConfig {
