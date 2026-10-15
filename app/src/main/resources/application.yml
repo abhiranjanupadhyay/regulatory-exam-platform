@@ -15,6 +15,12 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+  web:
+    resources:
+      cache:
+        # Always revalidate the web UI files so a new deploy shows up without a hard refresh.
+        cachecontrol:
+          no-cache: true
   servlet:
     multipart:
       max-file-size: 20MB
