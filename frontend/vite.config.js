@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// In development the UI proxies /api to the gateway so no CORS setup is needed.
+// In development the UI proxies /api to the API so no CORS setup is needed.
 export default defineConfig({
   plugins: [react()],
   server: {

@@ -1,0 +1,51 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: regexam
+  datasource:
+    # Neon: DB_URL=jdbc:postgresql://<host>/<db>?sslmode=require
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/regexam}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:password}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-change-me-change-me-change-me-1234}
+    ttl-hours: 12
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    # dev-mode accepts "dev:email|Name" as an id token. Never enable outside local development.
+    dev-mode: ${GOOGLE_DEV_MODE:false}
+  admin-emails: ${ADMIN_EMAILS:}
+  public-url: ${PUBLIC_URL:http://localhost:3000}
+
+exam:
+  negative-mark: 0.25
+  pass-percentage: 40
+  full:
+    questions: 100
+    minutes: 120
+  topic:
+    questions: 20
+    minutes: 30
+  qualifying:
+    questions: 50
+    minutes: 60
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
