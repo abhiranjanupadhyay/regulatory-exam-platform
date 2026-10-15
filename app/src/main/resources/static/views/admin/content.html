@@ -1,0 +1,96 @@
+<div class="page">
+  <page-head heading="Content Matrix" subtitle="Syllabus coverage, and the place to publish books, questions and dictionary terms">
+    <rx-pills options="vm.tabs" value="vm.tab" on-change="vm.tab = v"></rx-pills>
+    <button class="btn btn-primary" ng-click="vm.adding = true"><i class="bi bi-file-earmark-plus me-1"></i>Add topic</button>
+  </page-head>
+
+  <div ng-if="vm.tab === 'matrix'">
+    <rx-loading state="vm.matrix">
+      <rx-card flush="true" heading="Master linkage grid">
+        <card-actions><rx-pills options="vm.filterOpts" value="vm.filter" on-change="vm.filter = v"></rx-pills></card-actions>
+        <div class="table-responsive">
+          <table class="table rx-table">
+            <thead><tr><th>Exam / Paper</th><th>Topic</th><th>Tier</th><th>Weight</th><th>Book</th><th>MCQs</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr ng-repeat="r in vm.shown()">
+                <td><b>{{r.examName}}</b><div class="small muted">{{r.paperName}}</div></td><td>{{r.topic}}</td>
+                <td><span class="rb" ng-class="'tier-' + r.tier">Tier {{r.tier}}</span></td><td>{{r.weightage}}%</td>
+                <td><span class="rb green" ng-if="r.hasBook">Uploaded</span><span class="rb red" ng-if="!r.hasBook">Missing</span></td><td>{{r.mcqCount}}</td>
+                <td><span class="rb" ng-class="r.status | tone">{{r.status | words}}</span></td>
+              </tr>
+              <tr ng-if="!vm.shown().length"><td colspan="7" class="rx-empty">No topics yet. Create exams and papers under Exams &amp; Plans, then add topics.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </rx-card>
+    </rx-loading>
+  </div>
+
+  <div ng-if="vm.tab === 'ingest'">
+    <rx-loading state="vm.cur">
+      <div class="stack" style="gap:18px">
+        <rx-card heading="Unified ingestion engine">
+          <p class="muted">Select the exam, paper and topic once, then publish the book and its questions.</p>
+          <rx-curriculum-picker curriculum="vm.cur.data" on-change="vm.sel = sel"></rx-curriculum-picker>
+        </rx-card>
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <rx-card heading="Upload book">
+              <card-actions><span class="rb brand">.md / .txt</span></card-actions>
+              <input type="file" class="form-control mb-2" accept=".md,.txt" on-file-text="vm.bookText = text">
+              <textarea class="form-control" placeholder="…or paste the statutory handbook text (Markdown)" ng-model="vm.bookText"></textarea>
+              <button class="btn btn-primary mt-3" ng-disabled="!vm.sel.topic || !vm.bookText.trim()" ng-click="vm.publishBook()"><i class="bi bi-book me-1"></i>Publish book</button>
+            </rx-card>
+          </div>
+          <div class="col-lg-6">
+            <rx-card heading="Upload MCQs">
+              <card-actions><span class="rb brand">.csv or pasted rows</span></card-actions>
+              <input type="file" class="form-control mb-2" accept=".csv,.txt" on-file-text="vm.mcqText = text">
+              <textarea class="form-control" placeholder="{{vm.sample}}" ng-model="vm.mcqText"></textarea>
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-primary" ng-disabled="!vm.sel.topic || !vm.mcqText.trim()" ng-click="vm.uploadMcqs('ADD')"><i class="bi bi-upload me-1"></i>Add questions</button>
+                <button class="btn btn-light" ng-disabled="!vm.sel.topic || !vm.mcqText.trim()" ng-click="vm.uploadMcqs('REPLACE')"><i class="bi bi-upload me-1"></i>Replace all</button>
+              </div>
+              <div class="alert alert-warning mt-3 mb-0" ng-if="vm.report.errors.length">
+                <b>{{vm.report.skipped}} row(s) skipped</b>
+                <ul class="mb-0 mt-1 ps-3"><li ng-repeat="e in vm.report.errors | limitTo: 8">{{e}}</li></ul>
+              </div>
+            </rx-card>
+          </div>
+        </div>
+        <rx-card heading="Bilingual dictionary">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Bulk upload (.json: [{word, definition, translation, legalContext}])</label>
+              <input type="file" class="form-control" accept=".json" on-file-text="vm.dictFile(text)">
+              <div class="alert alert-info mt-2 mb-0" ng-if="vm.dictReport">{{vm.dictReport.added}} added · {{vm.dictReport.skipped}} duplicates skipped</div>
+            </div>
+            <div class="col-md-6">
+              <input class="form-control mb-2" placeholder="Word" ng-model="vm.dict.word">
+              <input class="form-control mb-2" placeholder="Definition" ng-model="vm.dict.definition">
+              <input class="form-control mb-2" placeholder="Hindi / vernacular translation" ng-model="vm.dict.translation">
+              <input class="form-control mb-2" placeholder="Legal context" ng-model="vm.dict.legalContext">
+              <button class="btn btn-light" ng-disabled="!vm.dict.word || !vm.dict.definition" ng-click="vm.addWord()"><i class="bi bi-plus-lg me-1"></i>Add word</button>
+            </div>
+          </div>
+        </rx-card>
+      </div>
+    </rx-loading>
+  </div>
+
+  <rx-modal ng-if="vm.adding" heading="Add syllabus topic" on-close="vm.adding = false">
+    <div class="mb-3"><label class="form-label">Paper</label>
+      <select class="form-select" ng-model="vm.form.paperId"><option value="">Select paper</option><option ng-repeat="p in vm.papers" value="{{p.id}}">{{p.label}}</option></select></div>
+    <div class="mb-3"><label class="form-label">Topic title</label><input class="form-control" ng-model="vm.form.title"></div>
+    <div class="row g-3 mb-3">
+      <div class="col-6"><label class="form-label">Preparation tier</label>
+        <select class="form-select" ng-model="vm.form.tier"><option value="1">Tier 1 · Foundation</option><option value="2">Tier 2 · Expansion</option><option value="3">Tier 3 · Mastery</option></select></div>
+      <div class="col-6"><label class="form-label">Weightage %</label><input class="form-control" type="number" ng-model="vm.form.weightage"></div>
+    </div>
+    <div><label class="form-label">Chapter titles (one per line)</label><textarea class="form-control" ng-model="vm.form.chapterTitles"></textarea></div>
+    <modal-footer>
+      <button class="btn btn-light" ng-click="vm.adding = false">Cancel</button>
+      <button class="btn btn-primary" ng-disabled="!vm.form.paperId || !vm.form.title" ng-click="vm.saveTopic()">Create topic</button>
+    </modal-footer>
+  </rx-modal>
+</div>

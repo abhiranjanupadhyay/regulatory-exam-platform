@@ -1,0 +1,12 @@
+<div class="page-center">
+  <div class="auth-card" style="max-width:440px">
+    <div class="brand"><div class="logo"><i class="bi bi-mortarboard-fill"></i></div>RegExam</div>
+    <h2>Log in</h2>
+    <p class="muted">Use the Google account you registered with.</p>
+    <div class="alert alert-danger my-3" ng-if="vm.error">
+      {{vm.error.message}} <a href="#/register" ng-if="vm.error.code === 'NOT_REGISTERED'"><b>Register now</b></a>
+    </div>
+    <rx-google-sign-in label="Log in" on-token="vm.onToken(t)"></rx-google-sign-in>
+    <p class="small muted text-center mt-4 mb-0">New here? <a href="#/register">Register with an invite code</a></p>
+  </div>
+</div>

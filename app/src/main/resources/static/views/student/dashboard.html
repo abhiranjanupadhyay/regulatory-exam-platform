@@ -1,0 +1,46 @@
+<div class="page">
+  <page-head heading="Welcome back, {{vm.firstName}}" subtitle="{{vm.student.examName(vm.student.examId)}} preparation overview"></page-head>
+  <rx-loading state="vm.d">
+    <div class="stack" style="gap:18px">
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <rx-card heading="Readiness meter">
+            <div class="d-flex align-items-center gap-4">
+              <rx-ring value="vm.d.data.readinessPct"></rx-ring>
+              <div class="grow stack" style="gap:12px">
+                <div><div class="d-flex justify-content-between small"><span>Syllabus completion</span><b>{{vm.d.data.syllabusCompletionPct}}%</b></div>
+                  <rx-progress value="vm.d.data.syllabusCompletionPct"></rx-progress></div>
+                <div><div class="d-flex justify-content-between small"><span>Accuracy</span><b>{{vm.d.data.accuracyPct}}%</b></div>
+                  <rx-progress value="vm.d.data.accuracyPct" tone="green"></rx-progress></div>
+              </div>
+            </div>
+          </rx-card>
+        </div>
+        <div class="col-lg-6">
+          <rx-card heading="Pick up where you left off">
+            <div class="stack" ng-if="vm.d.data.resume">
+              <div><div class="muted small">Last studied</div><div class="fw-bold fs-5">{{vm.d.data.resume.topic}}</div></div>
+              <div><a class="btn btn-primary btn-lg" ng-href="#/app/study/{{vm.d.data.resume.topicId}}">Resume <i class="bi bi-arrow-right ms-1"></i></a></div>
+            </div>
+            <rx-empty ng-if="!vm.d.data.resume" icon="bi-list-check" heading="No activity yet" hint="Open the Study Table and answer your first question."></rx-empty>
+          </rx-card>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-4"><rx-stat icon="bi-bullseye" tone="brand" value="vm.d.data.questionsPracticed" label="Questions practised"></rx-stat></div>
+        <div class="col-md-4"><rx-stat icon="bi-speedometer" tone="green" value="vm.d.data.averageMockScore + '%'" label="Average mock score"></rx-stat></div>
+        <div class="col-md-4"><rx-stat icon="bi-fire" tone="amber" value="vm.d.data.streakDays + (vm.d.data.streakDays === 1 ? ' day' : ' days')" label="Current streak"></rx-stat></div>
+      </div>
+
+      <rx-card heading="Weak-area remediation">
+        <card-actions><a class="btn btn-primary btn-sm" href="#/app/practice/weak" ng-if="vm.d.data.weakAreas.length">Practice weak MCQs</a></card-actions>
+        <div class="muted" ng-if="!vm.d.data.weakAreas.length">No weak areas detected. Mistakes in practice or mocks will show up here.</div>
+        <div class="row-line" ng-repeat="w in vm.d.data.weakAreas">
+          <div class="d-flex align-items-center gap-2"><i class="bi bi-exclamation-triangle" style="color:var(--amber)"></i><a ng-href="#/app/study/{{w.topicId}}">{{w.topic}}</a></div>
+          <span class="rb amber">{{w.weakQuestions}} to revisit</span>
+        </div>
+      </rx-card>
+    </div>
+  </rx-loading>
+</div>

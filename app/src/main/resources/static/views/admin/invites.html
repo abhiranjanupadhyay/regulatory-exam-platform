@@ -1,0 +1,28 @@
+<div class="page">
+  <page-head heading="Invite Codes" subtitle="Single-use codes that gate registration">
+    <button class="btn btn-primary" ng-click="vm.generate()"><i class="bi bi-plus-lg me-1"></i>Generate code</button>
+  </page-head>
+  <rx-loading state="vm.list">
+    <div class="stack" style="gap:16px">
+      <div class="row g-3">
+        <div class="col-md-4"><rx-stat icon="bi-key" tone="brand" value="vm.list.data.length" label="Total codes"></rx-stat></div>
+        <div class="col-md-4"><rx-stat icon="bi-key" tone="green" value="vm.count('ACTIVE')" label="Active"></rx-stat></div>
+        <div class="col-md-4"><rx-stat icon="bi-key" tone="amber" value="vm.count('USED')" label="Redeemed"></rx-stat></div>
+      </div>
+      <rx-card flush="true">
+        <rx-empty ng-if="!vm.list.data.length" icon="bi-key" heading="No invite codes yet" hint="Generate one to invite a candidate."></rx-empty>
+        <div class="table-responsive" ng-if="vm.list.data.length">
+          <table class="table rx-table">
+            <thead><tr><th>Code</th><th>Created by</th><th>Redeemed by</th><th>When</th><th>Status</th><th></th></tr></thead>
+            <tbody><tr ng-repeat="c in vm.list.data">
+              <td style="font-family:monospace;font-weight:700;letter-spacing:1px">{{c.code}}</td><td>{{c.createdBy}}</td>
+              <td>{{c.redeemedBy || '-'}}</td><td>{{(c.redeemedAt || c.createdAt) | rxDateTime}}</td>
+              <td><span class="rb" ng-class="c.status | tone">{{c.status}}</span></td>
+              <td class="text-end"><button class="btn btn-light btn-sm" ng-if="c.status === 'ACTIVE'" ng-click="vm.share(c)"><i class="bi bi-clipboard me-1"></i>Share</button></td>
+            </tr></tbody>
+          </table>
+        </div>
+      </rx-card>
+    </div>
+  </rx-loading>
+</div>

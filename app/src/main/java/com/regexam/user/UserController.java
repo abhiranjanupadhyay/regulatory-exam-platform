@@ -36,10 +36,22 @@ public class UserController {
     private final AppUserRepository users;
     private final InviteCodeRepository invites;
 
-    @Value("${app.public-url:http://localhost:3000}")
+    @Value("${app.public-url:http://localhost:8080}")
     private String publicUrl;
 
+    @Value("${app.google.client-id:}")
+    private String googleClientId;
+
+    @Value("${app.google.dev-mode:false}")
+    private boolean devMode;
+
     // ---- public auth ----
+
+    /** What the browser needs before sign-in: the Google client id and whether dev sign-in is enabled. */
+    @GetMapping("/auth/config")
+    public Map<String, Object> config() {
+        return Map.of("googleClientId", googleClientId, "devMode", devMode);
+    }
 
     @PostMapping("/auth/register")
     public AuthService.AuthResponse register(@Valid @RequestBody AuthService.RegisterRequest req) {
@@ -95,8 +107,8 @@ public class UserController {
     }
 
     private InviteView view(InviteCode c) {
-        String message = "You are invited to the Regulatory Exam Preparation Platform. Register at " + publicUrl
-                + " using invite code " + c.getCode() + ". The code works only once.";
+        String message = "You are invited to the Regulatory Exam Preparation Platform. Register at " + publicUrl.replaceAll("/+$", "")
+                + "/#/register using invite code " + c.getCode() + ". The code works only once.";
         return new InviteView(c.getCode(), c.getCreatedBy(), c.getCreatedAt(), c.getRedeemedBy(),
                 c.getRedeemedAt(), c.isActive() ? "ACTIVE" : "USED", message);
     }

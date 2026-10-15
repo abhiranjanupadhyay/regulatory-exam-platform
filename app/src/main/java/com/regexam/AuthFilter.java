@@ -36,7 +36,7 @@ public class AuthFilter extends OncePerRequestFilter {
                     + "Your session here has been deactivated.";
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
-            "/api/auth/login", "/api/auth/register", "/api/auth/invite/validate");
+            "/api/auth/login", "/api/auth/register", "/api/auth/invite/validate", "/api/auth/config");
 
     private final JwtService jwt;
     private final AuthService auth;

@@ -1,0 +1,14 @@
+<div class="page">
+  <page-head heading="Study Table" subtitle="{{vm.student.examName(vm.student.examId)}} · choose a chapter to open the rulebook and its practice deck"></page-head>
+  <rx-loading state="vm.d">
+    <div class="stack">
+      <rx-card ng-repeat="p in vm.d.data.papers" heading="{{p.name}}" flush="true">
+        <rx-empty ng-if="!p.topics.length" heading="No topics yet"></rx-empty>
+        <a class="topic" ng-repeat="t in p.topics" ng-href="#/app/study/{{t.id}}">
+          <i class="bi bi-journal-text" style="color:var(--brand)"></i>
+          <div class="grow"><b>{{t.title}}</b><div class="small muted">Tier {{t.tier}} · {{t.mcqCount}} questions</div></div>
+        </a>
+      </rx-card>
+    </div>
+  </rx-loading>
+</div>

@@ -1,0 +1,21 @@
+<div class="page">
+  <page-head heading="Profile" subtitle="Your registered details"></page-head>
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <rx-card heading="Personal & departmental details">
+        <dl class="kv"><div style="display:contents" ng-repeat="r in vm.rows"><dt>{{r[0]}}</dt><dd>{{r[1]}}</dd></div></dl>
+      </rx-card>
+    </div>
+    <div class="col-lg-6">
+      <rx-card heading="Subscriptions" flush="true">
+        <table class="table rx-table">
+          <thead><tr><th>Plan</th><th>Status</th><th>Valid until</th></tr></thead>
+          <tbody><tr ng-repeat="s in vm.student.subs.subscriptions">
+            <td><b>{{s.planName}}</b><div class="small muted">{{vm.student.examName(s.examId)}}</div></td>
+            <td><span class="rb" ng-class="s.status | tone">{{s.status}}</span></td><td>{{s.expiresAt | rxDate}}</td>
+          </tr></tbody>
+        </table>
+      </rx-card>
+    </div>
+  </div>
+</div>

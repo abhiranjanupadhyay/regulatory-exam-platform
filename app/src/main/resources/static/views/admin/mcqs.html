@@ -1,0 +1,13 @@
+<div class="page" style="max-width:1000px">
+  <page-head heading="MCQ Database Editor" subtitle="Browse questions by paper and topic, fix typos and answers in place"></page-head>
+  <rx-card>
+    <rx-loading state="vm.cur"><rx-curriculum-picker curriculum="vm.cur.data" on-change="vm.pick(sel)"></rx-curriculum-picker></rx-loading>
+  </rx-card>
+  <div class="mt-3">
+    <div class="alert alert-info" ng-if="!vm.sel.topic">Choose an exam, paper and topic to load its questions.</div>
+    <rx-loading state="vm.list" ng-if="vm.sel.topic">
+      <rx-card ng-if="!vm.list.data.length"><rx-empty heading="No questions for this topic"></rx-empty></rx-card>
+      <rx-mcq-row ng-repeat="m in vm.list.data track by m.id" original="m"></rx-mcq-row>
+    </rx-loading>
+  </div>
+</div>

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-// Seeds demo data through the gateway so the UI has something to show on first run.
+// Seeds demo data through the API so the UI has something to show on first run.
 //
 //   ADMIN_EMAIL=you@example.com node scripts/seed.mjs
 //
-// Requires the services running with GOOGLE_DEV_MODE=true and ADMIN_EMAILS containing ADMIN_EMAIL.
+// Requires the app running with GOOGLE_DEV_MODE=true and ADMIN_EMAILS containing ADMIN_EMAIL.
 // All books and questions are SAMPLE content for demonstration, not real regulations.
 // Safe to re-run: it stops if the sample exam already exists.
 
 const API = process.env.API_URL || 'http://localhost:8080';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 if (!ADMIN_EMAIL) {
-  console.error('Set ADMIN_EMAIL to an address listed in ADMIN_EMAILS on user-service.');
+  console.error('Set ADMIN_EMAIL to an address listed in ADMIN_EMAILS on the app.');
   process.exit(1);
 }
 

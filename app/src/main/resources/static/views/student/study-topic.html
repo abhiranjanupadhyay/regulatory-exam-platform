@@ -1,0 +1,32 @@
+<div class="page" rx-protect>
+  <rx-loading state="vm.d">
+    <page-head heading="{{vm.d.data.book.title}}" subtitle="Rulebook on the left, practice deck on the right">
+      <a class="btn btn-light" href="#/app/study">All chapters</a>
+    </page-head>
+    <div class="split">
+      <div class="rx-card flush pane">
+        <div class="card-head">
+          <h3>Statutory rulebook</h3>
+          <div class="search" style="width:240px"><i class="bi bi-search"></i><input class="form-control" placeholder="Search in chapter" ng-model="vm.term"></div>
+        </div>
+        <div class="pane-body selectable book" ng-dblclick="vm.lookup()" ng-mouseup="vm.lookup()">
+          <div ng-if="vm.d.data.book.markdown" rx-markdown text="vm.d.data.book.markdown" term="vm.term"></div>
+          <rx-empty ng-if="!vm.d.data.book.markdown" icon="bi-journal-text" heading="The rulebook for this chapter is not published yet"></rx-empty>
+        </div>
+      </div>
+      <div class="rx-card flush pane">
+        <div class="card-head"><h3>Practice deck</h3><span class="rb brand">{{vm.d.data.mcqs.length}} questions</span></div>
+        <div class="pane-body"><rx-practice-deck questions="vm.d.data.mcqs"></rx-practice-deck></div>
+      </div>
+    </div>
+  </rx-loading>
+  <div class="dict-pop" ng-if="vm.pop" ng-style="{left: vm.pop.x + 'px', top: vm.pop.y + 'px'}">
+    <div class="fw-bold fs-6">{{vm.pop.word}}</div>
+    <div ng-if="vm.pop.entry">
+      <p class="my-2">{{vm.pop.entry.definition}}</p>
+      <div ng-if="vm.pop.entry.translation"><span class="rb brand">Hindi</span> {{vm.pop.entry.translation}}</div>
+      <div class="small muted mt-2" ng-if="vm.pop.entry.legalContext">{{vm.pop.entry.legalContext}}</div>
+    </div>
+    <div class="muted small mt-2" ng-if="!vm.pop.entry">No dictionary entry for this term yet.</div>
+  </div>
+</div>

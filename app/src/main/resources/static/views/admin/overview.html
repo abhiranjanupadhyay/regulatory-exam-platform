@@ -1,0 +1,62 @@
+<div class="page">
+  <page-head heading="Overview" subtitle="Everything that needs your attention, at a glance"></page-head>
+  <rx-loading state="vm.d">
+    <div class="stack" style="gap:18px">
+      <div class="row g-3">
+        <div class="col-md-3"><rx-stat icon="bi-people" tone="brand" value="vm.d.data.students" label="Registered candidates"></rx-stat></div>
+        <div class="col-md-3"><rx-stat icon="bi-person-check" tone="green" value="vm.d.data.active" label="Active subscriptions"></rx-stat></div>
+        <div class="col-md-3"><rx-stat icon="bi-credit-card" tone="amber" value="vm.d.data.pending.length" label="Payments awaiting approval"></rx-stat></div>
+        <div class="col-md-3"><rx-stat icon="bi-life-preserver" tone="red" value="vm.d.data.openTickets.length" label="Open support tickets"></rx-stat></div>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <rx-card heading="Payments awaiting approval" flush="true">
+            <card-actions><a href="#/admin/candidates" class="btn btn-light btn-sm">View all</a></card-actions>
+            <rx-empty ng-if="!vm.d.data.pending.length" icon="bi-credit-card" heading="All caught up" hint="No payments are waiting."></rx-empty>
+            <table class="table rx-table" ng-if="vm.d.data.pending.length"><tbody>
+              <tr ng-repeat="s in vm.d.data.pending | limitTo: 6">
+                <td><b>{{s.userName}}</b><div class="small muted">{{s.userOffice}} · {{s.planName}}</div></td>
+                <td class="small">UTR {{s.utr}}<div class="muted">{{s.submittedAt | rxDateTime}}</div></td>
+                <td class="text-end"><button class="btn btn-success btn-sm" ng-click="vm.approve(s.id)">Approve</button></td>
+              </tr>
+            </tbody></table>
+          </rx-card>
+        </div>
+        <div class="col-lg-6">
+          <rx-card heading="Open discrepancy reports" flush="true">
+            <card-actions><a href="#/admin/candidates" class="btn btn-light btn-sm">Open desk</a></card-actions>
+            <rx-empty ng-if="!vm.d.data.openTickets.length" icon="bi-life-preserver" heading="No open reports"></rx-empty>
+            <table class="table rx-table" ng-if="vm.d.data.openTickets.length"><tbody>
+              <tr ng-repeat="t in vm.d.data.openTickets | limitTo: 6">
+                <td><div class="fw-semibold">{{t.question | limitTo: 80}}</div><div class="small muted">{{t.userEmail}} · {{t.remarks | limitTo: 60}}</div></td>
+              </tr>
+            </tbody></table>
+          </rx-card>
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <rx-card heading="Content readiness">
+            <card-actions><a href="#/admin/content" class="btn btn-light btn-sm">Content matrix</a></card-actions>
+            <div class="d-flex justify-content-between small mb-2"><span>{{vm.d.data.complete}} of {{vm.d.data.topics}} topics fully populated</span><b>{{vm.d.data.completePct}}%</b></div>
+            <rx-progress value="vm.d.data.completePct" tone="green"></rx-progress>
+            <div class="mt-3">
+              <div class="row-line" ng-repeat="g in vm.d.data.gaps | limitTo: 6">
+                <span><i class="bi bi-exclamation-circle" style="color:var(--amber)"></i> {{g.topic}} <span class="small muted">({{g.paperName}})</span></span>
+                <span class="rb amber">{{g.status | words}}</span>
+              </div>
+              <div class="muted" ng-if="!vm.d.data.gaps.length && vm.d.data.topics">Every topic has a book and questions.</div>
+            </div>
+          </rx-card>
+        </div>
+        <div class="col-lg-6">
+          <rx-card heading="Needs follow-up">
+            <div class="d-flex justify-content-between py-2"><span><i class="bi bi-book me-1"></i> Plans expiring within 5 days</span><span class="rb" ng-class="vm.d.data.expiring.length ? 'amber' : ''">{{vm.d.data.expiring.length}}</span></div>
+            <div class="small muted py-1 ps-4" ng-repeat="s in vm.d.data.expiring | limitTo: 5">{{s.userName}} · {{s.daysRemaining}} day(s) left</div>
+            <div class="d-flex justify-content-between py-2 mt-2" style="border-top:1px solid var(--line)"><span><i class="bi bi-key me-1"></i> Unused invite codes</span><span class="rb brand">{{vm.d.data.unusedInvites}}</span></div>
+          </rx-card>
+        </div>
+      </div>
+    </div>
+  </rx-loading>
+</div>

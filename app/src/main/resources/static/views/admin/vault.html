@@ -1,0 +1,21 @@
+<div class="page" style="max-width:900px">
+  <page-head heading="Snapshot Vault" subtitle="Offline backups of syllabus, books, questions and dictionary"></page-head>
+  <div class="row g-3">
+    <div class="col-md-6"><rx-card heading="One-click backup">
+      <p class="muted">Downloads one JSON file with all content. Student accounts and payments are not included.</p>
+      <button class="btn btn-primary" ng-click="vm.backup()" ng-disabled="vm.busy"><i class="bi bi-download me-1"></i>Download backup</button>
+    </rx-card></div>
+    <div class="col-md-6"><rx-card heading="Restore a snapshot">
+      <p class="muted">Upload a saved backup to restore content.</p>
+      <input type="file" class="form-control" accept=".json" on-file-text="vm.pick(text)">
+    </rx-card></div>
+  </div>
+  <rx-modal ng-if="vm.pending" heading="Restore this snapshot?" on-close="vm.pending = null">
+    <div class="alert alert-warning mb-0">All current exams, papers, topics, books, questions and dictionary entries will be <b>replaced</b> by the snapshot:
+      {{vm.count('exams')}} exams, {{vm.count('topics')}} topics, {{vm.count('mcqs')}} questions.</div>
+    <modal-footer>
+      <button class="btn btn-light" ng-click="vm.pending = null">Cancel</button>
+      <button class="btn btn-danger" ng-click="vm.restore()"><i class="bi bi-arrow-counterclockwise me-1"></i>Replace all content</button>
+    </modal-footer>
+  </rx-modal>
+</div>

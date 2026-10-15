@@ -1,0 +1,91 @@
+<div class="page">
+  <page-head heading="Candidates & Support" subtitle="Approve payments, manage plans and answer discrepancy reports">
+    <rx-pills options="vm.tabs" value="vm.tab" on-change="vm.tab = v"></rx-pills>
+  </page-head>
+
+  <div ng-if="vm.tab === 'roster'">
+    <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+      <rx-pills options="vm.statusOpts" value="vm.status" on-change="vm.status = v"></rx-pills>
+      <div class="search" style="width:320px"><i class="bi bi-search"></i>
+        <input class="form-control" placeholder="Search name, email, office or UTR" ng-model="vm.q" ng-model-options="{debounce: 300}"></div>
+    </div>
+    <rx-card flush="true">
+      <rx-loading state="vm.rows">
+        <rx-empty ng-if="!vm.rows.data.length" heading="No candidates match"></rx-empty>
+        <div class="table-responsive" ng-if="vm.rows.data.length">
+          <table class="table rx-table">
+            <thead><tr><th>Candidate</th><th>Plan</th><th>Expires</th><th>UTR</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr class="click" ng-repeat="s in vm.rows.data" ng-click="vm.open = s">
+                <td><b>{{s.userName}}</b><div class="small muted">{{s.userOffice}}</div></td>
+                <td>{{s.planName}}</td>
+                <td><span ng-if="s.expiresAt">{{s.expiresAt | rxDate}}<div class="small muted">{{s.daysRemaining}} days</div></span><span ng-if="!s.expiresAt">-</span></td>
+                <td>{{s.utr}}</td>
+                <td><span class="rb" ng-class="s.status | tone">{{s.status}}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </rx-loading>
+    </rx-card>
+
+    <rx-drawer ng-if="vm.open" heading="Candidate" on-close="vm.open = null">
+      <h3 class="m-0">{{vm.open.userName}}</h3>
+      <div class="muted mb-3">{{vm.open.userEmail}}</div>
+      <dl class="kv mb-4">
+        <dt>Office</dt><dd>{{vm.open.userOffice}}</dd><dt>Plan</dt><dd>{{vm.open.planName}}</dd>
+        <dt>UTR</dt><dd>{{vm.open.utr}}</dd><dt>Submitted</dt><dd>{{vm.open.submittedAt | rxDateTime}}</dd>
+        <dt>Status</dt><dd><span class="rb" ng-class="vm.open.status | tone">{{vm.open.status}}</span></dd>
+        <dt>Valid until</dt><dd>{{vm.open.expiresAt | rxDate}} <span ng-if="vm.open.expiresAt">({{vm.open.daysRemaining}} days)</span></dd>
+      </dl>
+      <div class="stack">
+        <div class="d-flex gap-2" ng-if="vm.open.status === 'PENDING'">
+          <button class="btn btn-success grow" ng-click="vm.act(vm.open.id, 'approve')"><i class="bi bi-check-circle me-1"></i>Approve</button>
+          <button class="btn btn-danger grow" ng-click="vm.act(vm.open.id, 'reject', {})"><i class="bi bi-slash-circle me-1"></i>Reject</button>
+        </div>
+        <button class="btn btn-light" ng-if="vm.open.status === 'ACTIVE'" ng-click="vm.act(vm.open.id, 'freeze')"><i class="bi bi-pause me-1"></i>Freeze plan</button>
+        <button class="btn btn-primary" ng-if="vm.open.status === 'FROZEN'" ng-click="vm.act(vm.open.id, 'unfreeze')"><i class="bi bi-play me-1"></i>Unfreeze plan</button>
+        <rx-card heading="Extend validity" ng-if="vm.inactive(vm.open.status)">
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-light btn-sm" ng-repeat="d in [30, 60, 90]" ng-click="vm.act(vm.open.id, 'extend', {days: d})"><i class="bi bi-calendar-plus me-1"></i>+{{d}} days</button>
+          </div>
+          <div class="d-flex gap-2 mt-3"><input type="date" class="form-control" ng-model="vm.until">
+            <button class="btn btn-primary btn-sm" ng-disabled="!vm.until" ng-click="vm.setUntil()">Set date</button></div>
+        </rx-card>
+      </div>
+    </rx-drawer>
+  </div>
+
+  <div ng-if="vm.tab === 'tickets'">
+    <div class="mb-3"><rx-pills options="vm.tOpts" value="vm.tStatus" on-change="vm.setTStatus(v)"></rx-pills></div>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <rx-card flush="true">
+          <rx-loading state="vm.tickets">
+            <rx-empty ng-if="!vm.tickets.data.length" heading="Nothing here"></rx-empty>
+            <div class="topic" ng-repeat="x in vm.tickets.data" ng-class="{sel: vm.sel.id === x.id}" ng-click="vm.pick(x)">
+              <div class="grow"><div class="fw-semibold">{{x.question | limitTo: 90}}</div><div class="small muted">{{x.userEmail}} · {{x.createdAt | rxDateTime}}</div></div>
+              <span class="rb" ng-class="x.status | tone">{{x.status}}</span>
+            </div>
+          </rx-loading>
+        </rx-card>
+      </div>
+      <div class="col-lg-6">
+        <rx-card heading="Ticket details">
+          <rx-empty ng-if="!vm.sel" heading="Select a ticket"></rx-empty>
+          <div ng-if="vm.sel">
+            <div class="explain mt-0"><b>Disputed question</b><br>{{vm.sel.question}}<div class="small muted" ng-if="vm.sel.citation">Citation: {{vm.sel.citation}}</div></div>
+            <div class="my-3"><b>Student remarks</b><div>{{vm.sel.remarks}}</div></div>
+            <div class="alert alert-info" ng-if="vm.sel.status !== 'OPEN'">Already {{vm.sel.status | lowercase}}.</div>
+            <label class="form-label">Official reply</label>
+            <textarea class="form-control mb-3" ng-model="vm.reply"></textarea>
+            <div class="d-flex gap-2">
+              <button class="btn btn-success" ng-disabled="!vm.reply.trim()" ng-click="vm.respond('RESOLVED')"><i class="bi bi-send me-1"></i>Reply &amp; resolve</button>
+              <button class="btn btn-danger" ng-disabled="!vm.reply.trim()" ng-click="vm.respond('REJECTED')">Reject dispute</button>
+            </div>
+          </div>
+        </rx-card>
+      </div>
+    </div>
+  </div>
+</div>

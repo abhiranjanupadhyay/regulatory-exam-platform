@@ -25,31 +25,31 @@ Configuration (env vars): `DB_URL` (JDBC, e.g. `jdbc:postgresql://host/db?sslmod
 `GOOGLE_DEV_MODE=true` accepts the id token `dev:someone@example.com|Some Name` so the flows can be tried
 without Google. Never enable it outside local development.
 
-## Frontend (`frontend/`)
+## Web UI (served by the app)
 
-React + Vite single-page app with two shells, each with a left navigation sidebar.
+Plain HTML + Bootstrap 5 + AngularJS 1.8, no build step. The files live in `app/src/main/resources/static/` and are
+served by the Spring Boot app itself, so there is nothing separate to deploy: open the app's URL and you land on the
+home page. Routing is hash based (`/#/login`, `/#/app`, `/#/admin`), and the app sends each user to the right place
+by role.
 
-- **Student portal**: Dashboard, Syllabus, Study Table, Mock Arena, Profile, Plans & Renewal. The top bar has the
+- **Student portal** (`#/app`): Dashboard, Syllabus, Study Table, Mock Arena, Profile, Plans & Renewal. The top bar has the
   exam-stage switcher, the validity badge (turns amber at 5 days or fewer, click to renew) and the profile menu.
   Study and test screens carry the forensic watermark and screen shielding.
-- **Admin console**: Overview (pending payments, open tickets, content readiness, expiring plans), Candidates &
+- **Admin console** (`#/admin`): Overview (pending payments, open tickets, content readiness, expiring plans), Candidates &
   Support, Invite Codes, Content Matrix (with ingestion), MCQ Editor, Snapshot Vault, Exams & Plans, Tier Control.
   The sidebar shows a live count of payments and tickets awaiting action.
 
-```bash
-cd frontend
-cp .env.example .env      # set VITE_GOOGLE_CLIENT_ID, or keep VITE_DEV_LOGIN=true for local development
-npm install
-npm run dev               # http://localhost:3000, proxies /api to the app (set `VITE_GATEWAY_URL`, default :8080)
-```
+Libraries (AngularJS, Bootstrap, Bootstrap Icons, marked, DOMPurify, qrcode-generator) are bundled under
+`static/vendor/`. Google sign-in loads Google's own script at runtime; `GET /api/auth/config` tells the page the
+Google client id and whether dev sign-in is enabled (it is, only when `GOOGLE_DEV_MODE=true`).
 
-First run: start the services with `GOOGLE_DEV_MODE=true ADMIN_EMAILS=you@example.com`, sign in as that email
-(it becomes the admin), then create an exam, papers, topics, a payment config and a plan under the admin console.
-Generate an invite code to register a student.
+First run: start the app with `GOOGLE_DEV_MODE=true ADMIN_EMAILS=you@example.com`, open http://localhost:8080, sign in
+as that email (it becomes the admin), then create an exam, papers, topics, a payment config and a plan under the admin
+console. Generate an invite code to register a student.
 
 ### Demo data
 
-With the services running (`GOOGLE_DEV_MODE=true`, `ADMIN_EMAILS=you@example.com`):
+With the app running (`GOOGLE_DEV_MODE=true`, `ADMIN_EMAILS=you@example.com`):
 
 ```bash
 ADMIN_EMAIL=you@example.com node scripts/seed.mjs
@@ -80,8 +80,6 @@ placeholder text, not real regulations. Re-running is safe: it stops if the samp
 
 ## Not built yet
 
-- The seed script has only been syntax-checked, not run against live services.
-- Visual and end-to-end checks of the UI against running services (the frontend builds, but has not been browsed).
 - Excel (`.xlsx`) MCQ upload: CSV files and pasted spreadsheet rows work; `.xlsx` is rejected with a clear message.
-- Automated tests, and a runtime check against a live Postgres.
-- All services share one Postgres database and keep to their own tables.
+- Automated tests in the repo. The UI and API were exercised by hand and with a scripted headless-browser run using
+  dev sign-in; real Google sign-in has not been tried locally.

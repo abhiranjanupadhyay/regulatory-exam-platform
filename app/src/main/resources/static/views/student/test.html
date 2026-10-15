@@ -1,0 +1,47 @@
+<div class="page" rx-protect>
+  <div class="alert alert-warning" ng-if="!vm.paper">This test is no longer open in this browser. Check your scorecards in the Mock Arena.</div>
+  <div ng-if="vm.paper">
+    <div class="rx-card card-body-pad d-flex justify-content-between align-items-center mb-3">
+      <div><h3 class="m-0">{{vm.paper.scopeLabel}}</h3><div class="small muted">Question {{vm.idx + 1}} of {{vm.total}}</div></div>
+      <div class="timer" ng-class="{low: vm.left < 300}">{{vm.left | clock}}</div>
+    </div>
+    <div class="exam-layout">
+      <div class="rx-card card-body-pad" style="height:auto">
+        <div class="fw-semibold mb-2" style="font-size:16px">{{vm.idx + 1}}. {{vm.question().question}}</div>
+        <button class="opt" ng-repeat="k in vm.keys" ng-class="{selected: vm.answers[vm.idx] === k}" ng-click="vm.choose(k)">
+          <span class="key">{{k}}</span><span>{{vm.question()['option' + k]}}</span>
+        </button>
+        <div class="d-flex justify-content-between flex-wrap gap-2 mt-4">
+          <div class="d-flex gap-2">
+            <button class="btn btn-light" ng-disabled="vm.idx === 0" ng-click="vm.go(vm.idx - 1)"><i class="bi bi-chevron-left"></i> Previous</button>
+            <button class="btn btn-light" ng-disabled="vm.idx === vm.total - 1" ng-click="vm.go(vm.idx + 1)">Next <i class="bi bi-chevron-right"></i></button>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-light" ng-disabled="!vm.answers[vm.idx]" ng-click="vm.clear()"><i class="bi bi-eraser me-1"></i>Clear</button>
+            <button class="btn btn-light" ng-click="vm.toggleMark()"><i class="bi bi-flag me-1"></i>{{vm.marked[vm.idx] ? 'Unmark' : 'Mark for review'}}</button>
+          </div>
+        </div>
+      </div>
+      <div class="rx-card card-body-pad align-self-start" style="height:auto">
+        <h3 class="mb-3" style="font-size:15px">Question palette</h3>
+        <div class="palette">
+          <button class="pal" ng-repeat="q in vm.paper.questions track by $index" ng-class="vm.palCls($index)" ng-click="vm.go($index)">{{$index + 1}}</button>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--green)"></i>Answered</span>
+          <span><i style="background:#f9d5d5"></i>Unanswered</span>
+          <span><i style="background:#7c3aed"></i>Marked</span>
+          <span><i style="background:#fff;border:1px solid var(--line)"></i>Not visited</span>
+        </div>
+        <button class="btn btn-primary w-100 mt-4" ng-click="vm.confirm = true"><i class="bi bi-send me-1"></i>Submit test</button>
+      </div>
+    </div>
+    <rx-modal ng-if="vm.confirm" heading="Submit this test?" on-close="vm.confirm = false">
+      <p class="mb-0">You have answered <b>{{vm.answered()}}</b> of <b>{{vm.total}}</b> questions<span ng-if="vm.markedCount()"> and marked {{vm.markedCount()}} for review</span>. You cannot change answers after submitting.</p>
+      <modal-footer>
+        <button class="btn btn-light" ng-click="vm.confirm = false">Keep working</button>
+        <button class="btn btn-primary" ng-disabled="vm.busy" ng-click="vm.submit()">Submit now</button>
+      </modal-footer>
+    </rx-modal>
+  </div>
+</div>

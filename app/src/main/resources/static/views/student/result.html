@@ -1,0 +1,30 @@
+<div class="page" rx-protect>
+  <rx-loading state="vm.d">
+    <page-head heading="Scorecard" subtitle="{{vm.d.data.scopeLabel}} · submitted {{vm.d.data.submittedAt | rxDateTime}}">
+      <a class="btn btn-light" href="#/app/mocks">Back to Mock Arena</a>
+    </page-head>
+    <div class="alert" ng-class="vm.d.data.passed ? 'alert-success' : 'alert-danger'">
+      <b>{{vm.d.data.passed ? 'Passed' : 'Not passed'}}</b> · {{vm.d.data.percentage}}%
+      <span ng-if="vm.d.data.mode === 'QUALIFYING'">{{vm.d.data.passed ? '· the next tier is now unlocked.' : '· retry after the cooldown period.'}}</span>
+    </div>
+    <div class="row g-3 my-1">
+      <div class="col-md-3"><rx-stat icon="bi-check-circle" tone="green" value="vm.d.data.correct" label="Correct"></rx-stat></div>
+      <div class="col-md-3"><rx-stat icon="bi-x-circle" tone="red" value="vm.d.data.wrong" label="Wrong"></rx-stat></div>
+      <div class="col-md-3"><rx-stat icon="bi-dash-circle" tone="amber" value="vm.d.data.unanswered" label="Unanswered"></rx-stat></div>
+      <div class="col-md-3"><rx-stat icon="bi-award" tone="brand" value="vm.d.data.score" label="Total score (−{{vm.d.data.negativeMarksDeducted}} negative)"></rx-stat></div>
+    </div>
+    <rx-card heading="Detailed review" class="d-block mt-3">
+      <div class="mcq" ng-repeat="q in vm.d.data.review">
+        <div class="d-flex justify-content-between gap-2"><b>{{q.number}}. {{q.question}}</b>
+          <span class="rb" ng-if="!q.selected">Unanswered</span>
+          <span class="rb green" ng-if="q.selected && q.selected === q.correct">Correct</span>
+          <span class="rb red" ng-if="q.selected && q.selected !== q.correct">Wrong</span>
+        </div>
+        <div class="opt static" ng-repeat="k in vm.keys" ng-class="{correct: k === q.correct, wrong: k === q.selected && k !== q.correct}">
+          <span class="key">{{k}}</span><span>{{q['option' + k]}}{{k === q.selected ? '  (your answer)' : ''}}</span>
+        </div>
+        <div class="explain" ng-if="q.explanation || q.citation">{{q.explanation}}<div class="small muted mt-1" ng-if="q.citation">Reference: {{q.citation}}</div></div>
+      </div>
+    </rx-card>
+  </rx-loading>
+</div>

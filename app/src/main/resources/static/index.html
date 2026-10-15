@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" ng-app="regexam">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regulatory Exam Platform</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="vendor/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body ng-controller="ShellCtrl as sh" ng-cloak>
+
+<div class="displaced" ng-if="sh.auth.displaced && sh.mode !== 'public'">
+  <div class="box">
+    <h1 class="mb-3">Session Displaced</h1>
+    <p>This account has been logged in on another device. Your session here has been deactivated.</p>
+  </div>
+</div>
+
+<div class="shell" ng-class="{pub: sh.mode === 'public'}">
+  <div class="scrim" ng-if="sh.navOpen" ng-click="sh.navOpen = false"></div>
+
+  <!-- Student sidebar -->
+  <aside class="sidebar" ng-class="{open: sh.navOpen}" ng-if="sh.mode === 'student'">
+    <div class="brand"><div class="logo"><i class="bi bi-mortarboard-fill"></i></div><div>RegExam<small>Student Portal</small></div></div>
+    <div class="nav-section">Learn</div>
+    <a ng-repeat="n in sh.studentNav" class="side-link" ng-href="{{sh.student.locked ? '' : '#' + n.to}}"
+       ng-class="{active: sh.isActive(n), disabled: sh.student.locked}"><i class="bi" ng-class="n.icon"></i>{{n.label}}</a>
+    <div class="nav-section">Account</div>
+    <a class="side-link" href="#/app/plans" ng-class="{active: sh.isActive({to: '/app/plans'})}"><i class="bi bi-credit-card"></i>Plans &amp; Renewal</a>
+    <div class="sidebar-foot">
+      <div class="text-white fw-semibold">{{sh.auth.user.name}}</div>
+      <div>{{sh.auth.user.office}}</div>
+    </div>
+  </aside>
+
+  <!-- Admin sidebar -->
+  <aside class="sidebar" ng-class="{open: sh.navOpen}" ng-if="sh.mode === 'admin'">
+    <div class="brand"><div class="logo"><i class="bi bi-mortarboard-fill"></i></div><div>RegExam<small>Admin Console</small></div></div>
+    <div ng-repeat="sec in sh.adminNav">
+      <div class="nav-section">{{sec.section}}</div>
+      <a ng-repeat="n in sec.items" class="side-link" ng-href="#{{n.to}}" ng-class="{active: sh.isActive(n)}">
+        <i class="bi" ng-class="n.icon"></i>{{n.label}}<span class="count" ng-if="n.badge && sh.attention > 0">{{sh.attention}}</span>
+      </a>
+    </div>
+    <div class="sidebar-foot">
+      <div class="text-white fw-semibold">{{sh.auth.user.name}}</div>
+      <div class="mb-2">{{sh.auth.user.email}}</div>
+      <button class="btn btn-sm btn-light w-100" ng-click="sh.logout()"><i class="bi bi-box-arrow-right me-1"></i>Log out</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar" ng-if="sh.mode !== 'public'">
+      <button class="btn btn-light menu-btn" ng-click="sh.navOpen = true"><i class="bi bi-list fs-5"></i></button>
+      <h2 class="grow">{{sh.title}}</h2>
+
+      <span class="rb brand" ng-if="sh.mode === 'admin'"><i class="bi bi-person-badge me-1"></i>Administrator</span>
+
+      <select class="form-select w-auto" title="Exam stage" ng-if="sh.mode === 'student' && sh.student.examIds.length"
+              ng-model="sh.student.examId" ng-change="sh.student.setExam(sh.student.examId)"
+              ng-options="id as sh.student.examName(id) for id in sh.student.examIds"></select>
+      <button class="validity" ng-if="sh.mode === 'student'" ng-class="{none: !sh.student.best, warn: sh.student.best.expiringSoon}"
+              ng-click="sh.go('/app/plans')" title="Renew or change plan">
+        <i class="bi bi-calendar-check"></i>{{sh.student.best ? sh.student.best.daysRemaining + ' days remaining' : 'No active plan'}}
+      </button>
+      <div class="position-relative user-menu-wrap" ng-if="sh.mode === 'student'">
+        <button class="avatar" ng-click="sh.menu = !sh.menu">{{sh.auth.user.name.charAt(0).toUpperCase()}}</button>
+        <div class="user-menu" ng-if="sh.menu">
+          <div class="px-3 py-2"><b>{{sh.auth.user.name}}</b><div class="small muted">{{sh.auth.user.email}}</div></div>
+          <button class="item" ng-click="sh.menu = false; sh.go('/app/profile')"><i class="bi bi-person"></i>View profile</button>
+          <button class="item" ng-click="sh.logout()"><i class="bi bi-box-arrow-right"></i>Log out</button>
+        </div>
+      </div>
+    </header>
+    <div class="content" ng-view></div>
+  </div>
+</div>
+
+<div class="toasts">
+  <div class="toast-item" ng-repeat="t in sh.toast.items" ng-class="t.kind">{{t.message}}</div>
+</div>
+
+<script src="vendor/angular.min.js"></script>
+<script src="vendor/angular-route.min.js"></script>
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/purify.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="js/app.js"></script>
+<script src="js/core.js"></script>
+<script src="js/components.js"></script>
+<script src="js/public.js"></script>
+<script src="js/student.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<div class="page">
+  <page-head heading="Syllabus" subtitle="{{vm.student.examName(vm.student.examId)}} · papers, topics and preparation tiers"></page-head>
+  <rx-loading state="vm.d">
+    <div class="stack" style="gap:22px">
+      <div class="alert alert-info" ng-if="!vm.d.data.syllabus.papers.length">The syllabus has not been published yet.</div>
+
+      <rx-card ng-repeat="paper in vm.d.data.syllabus.papers" heading="{{paper.name}}" flush="true">
+        <div ng-repeat="tier in [1, 2, 3]" ng-init="topics = vm.topics(paper, tier); st = vm.tier(tier)">
+          <div ng-if="topics.length">
+            <div class="tier-head">
+              <span class="tag" ng-class="'tier-' + tier">{{vm.tierNames[tier]}}</span>
+              <span class="rb green" ng-if="st.unlocked"><i class="bi bi-unlock"></i>Open</span>
+              <span class="rb" ng-if="!st.unlocked"><i class="bi bi-lock"></i>Locked</span>
+            </div>
+            <a class="topic" ng-repeat="t in topics" ng-class="{locked: !st.unlocked}" ng-href="{{st.unlocked ? '#/app/study/' + t.id : ''}}">
+              <i class="bi" ng-class="st.unlocked ? 'bi-journal-text' : 'bi-lock'" ng-style="st.unlocked && {color: 'var(--brand)'}"></i>
+              <div class="grow"><div class="fw-semibold">{{t.title}}</div><div class="small muted">{{t.mcqCount}} questions · weightage {{t.weightage}}%</div></div>
+              <span class="rb amber" ng-if="!t.hasBook">Book coming soon</span>
+            </a>
+          </div>
+        </div>
+      </rx-card>
+
+      <rx-card ng-repeat="t in vm.locked()" heading="Unlock Tier {{t.tier}}">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-8">
+            <div class="d-flex justify-content-between small"><span>Tier {{t.tier - 1}} practice coverage</span><b>{{t.previousTierCoveragePct}}% / {{t.coverageRequiredPct}}% needed</b></div>
+            <rx-progress value="t.previousTierCoveragePct" tone="{{t.previousTierCoveragePct >= t.coverageRequiredPct ? 'green' : ''}}"></rx-progress>
+            <p class="small muted mt-2">Then score at least {{t.qualifyingScorePct}}% in the qualifying exam (50 questions, 60 minutes).</p>
+            <div class="alert alert-warning mb-0" ng-if="t.retryAvailableAt">Retry available after {{t.retryAvailableAt | rxDateTime}}.</div>
+          </div>
+          <div class="col-md-4 text-md-end">
+            <button class="btn btn-primary btn-lg" ng-disabled="!t.canAttemptQualifier" ng-click="vm.qualify(t.tier)"><i class="bi bi-trophy me-1"></i>Take qualifying exam</button>
+          </div>
+        </div>
+      </rx-card>
+    </div>
+  </rx-loading>
+</div>

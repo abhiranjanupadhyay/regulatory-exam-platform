@@ -29,7 +29,7 @@ app:
     # dev-mode accepts "dev:email|Name" as an id token. Never enable outside local development.
     dev-mode: ${GOOGLE_DEV_MODE:false}
   admin-emails: ${ADMIN_EMAILS:}
-  public-url: ${PUBLIC_URL:http://localhost:3000}
+  public-url: ${PUBLIC_URL:http://localhost:8080}
 
 exam:
   negative-mark: 0.25

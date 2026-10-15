@@ -1,0 +1,52 @@
+<div class="page">
+  <page-head heading="Plans & Renewal" subtitle="Choose a plan, pay by UPI and submit your transaction reference for approval."></page-head>
+  <div class="alert alert-warning mb-3" ng-if="vm.pending().length">
+    <i class="bi bi-clock me-1"></i><b>Pending Admin Approval.</b>
+    <span ng-repeat="p in vm.pending()">{{p.planName}} (UTR {{p.utr}}){{$last ? '' : ', '}}</span>. You will get access as soon as your payment is confirmed.
+  </div>
+  <div class="alert alert-danger mb-3" ng-if="vm.hasRejected()">A previous payment was rejected. Check the UTR and submit again, or contact support.</div>
+
+  <rx-loading state="vm.plans">
+    <div class="row g-3 mb-4">
+      <div class="col-md-4" ng-repeat="p in vm.plans.data">
+        <div class="plan" ng-class="{selected: vm.planId === p.id}" ng-click="vm.select(p)">
+          <span class="rb brand">{{vm.student.examName(p.examId)}}</span>
+          <h3 class="mt-2">{{p.name}}</h3>
+          <div class="price">₹{{p.priceInr}}</div>
+          <div class="muted">{{p.durationDays}} days access</div>
+          <ul><li ng-repeat="f in p.features">{{f}}</li></ul>
+        </div>
+      </div>
+      <div class="col-12" ng-if="!vm.plans.data.length"><div class="alert alert-info mb-0">No plans are available yet. Please contact the administrator.</div></div>
+    </div>
+  </rx-loading>
+
+  <rx-loading state="vm.pay" ng-if="vm.planId">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <rx-card heading="1. Pay via UPI">
+          <div class="d-flex gap-4 align-items-start" ng-if="vm.pay.data.upiUri">
+            <div class="qr" rx-qr value="vm.pay.data.upiUri"></div>
+            <div>
+              <div class="muted small">UPI ID</div><div class="fw-bold fs-6">{{vm.pay.data.config.upiId}}</div>
+              <div class="muted small mt-3">Account name</div><div class="fw-semibold">{{vm.pay.data.config.accountName}}</div>
+              <div class="small muted mt-3">Scan with any UPI app. The amount is pre-filled.</div>
+            </div>
+          </div>
+          <div class="alert alert-warning mb-0" ng-if="!vm.pay.data.upiUri">The administrator has not set up UPI details yet.</div>
+        </rx-card>
+      </div>
+      <div class="col-lg-6">
+        <rx-card heading="2. Submit your transaction reference">
+          <div class="mb-3"><label class="form-label">12-digit UTR / bank reference number</label>
+            <input class="form-control" inputmode="numeric" maxlength="12" ng-model="vm.utr" ng-change="vm.cleanUtr()" placeholder="123456789012"></div>
+          <button class="btn btn-primary w-100" ng-disabled="vm.utr.length !== 12 || vm.busy" ng-click="vm.submit()"><i class="bi bi-shield-check me-1"></i>Submit for approval</button>
+          <div class="mt-3" ng-if="vm.sent">
+            <div class="alert alert-success">Submitted. Send the proof to the admin on WhatsApp to speed things up.</div>
+            <a class="btn btn-success w-100" ng-href="{{vm.sent.whatsappUrl}}" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i>Submit via WhatsApp</a>
+          </div>
+        </rx-card>
+      </div>
+    </div>
+  </rx-loading>
+</div>

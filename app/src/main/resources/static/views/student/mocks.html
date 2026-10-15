@@ -1,0 +1,57 @@
+<div class="page">
+  <page-head heading="Mock Arena" subtitle="{{vm.student.examName(vm.student.examId)}} · timed tests that mirror the computer-based exam"></page-head>
+  <rx-loading state="vm.d">
+    <div class="stack" style="gap:20px">
+      <div class="row g-3">
+        <div class="col-lg-4"><div class="rx-card mode-card">
+          <div class="ico tone-brand"><i class="bi bi-layers"></i></div>
+          <h3 class="m-0">Full syllabus mock</h3>
+          <p class="muted m-0">100 questions · 120 minutes. Negative marking of 0.25 per wrong answer.</p>
+          <div><button class="btn btn-primary" ng-click="vm.start({mode: 'FULL'})"><i class="bi bi-play-fill me-1"></i>Start mock</button></div>
+        </div></div>
+        <div class="col-lg-4"><div class="rx-card mode-card">
+          <div class="ico tone-green"><i class="bi bi-list-check"></i></div>
+          <h3 class="m-0">Topic / chapter test</h3>
+          <p class="muted m-0">20 questions · 30 minutes on a chapter of your choice.</p>
+          <select class="form-select" ng-model="vm.topicId"><option value="">Select a chapter</option><option ng-repeat="t in vm.d.data.topics" value="{{t.id}}">{{t.label}}</option></select>
+          <div><button class="btn btn-primary" ng-disabled="!vm.topicId" ng-click="vm.start({mode: 'TOPIC', topicId: vm.topicId})"><i class="bi bi-play-fill me-1"></i>Start test</button></div>
+        </div></div>
+        <div class="col-lg-4"><div class="rx-card mode-card">
+          <div class="ico tone-amber"><i class="bi bi-trophy"></i></div>
+          <h3 class="m-0">Tier qualifying exam</h3>
+          <div ng-if="vm.d.data.next">
+            <p class="muted">50 questions · 60 minutes. Unlocks Tier {{vm.d.data.next.tier}}; needs {{vm.d.data.next.coverageRequiredPct}}% Tier {{vm.d.data.next.tier - 1}} practice ({{vm.d.data.next.previousTierCoveragePct}}% done).</p>
+            <button class="btn btn-primary" ng-disabled="!vm.d.data.next.canAttemptQualifier" ng-click="vm.start({mode: 'QUALIFYING', tier: vm.d.data.next.tier})"><i class="bi bi-play-fill me-1"></i>Attempt for Tier {{vm.d.data.next.tier}}</button>
+            <div class="small muted mt-2" ng-if="vm.d.data.next.retryAvailableAt">Retry after {{vm.d.data.next.retryAvailableAt | rxDateTime}}</div>
+          </div>
+          <p class="muted m-0" ng-if="!vm.d.data.next">All tiers are unlocked.</p>
+        </div></div>
+      </div>
+
+      <rx-card heading="Your attempts" flush="true">
+        <rx-empty ng-if="!vm.d.data.history.length" heading="No attempts yet" hint="Your scorecards will appear here."></rx-empty>
+        <div class="table-responsive" ng-if="vm.d.data.history.length">
+          <table class="table rx-table">
+            <thead><tr><th>Test</th><th>Started</th><th>Score</th><th>Result</th><th></th></tr></thead>
+            <tbody>
+              <tr ng-repeat="h in vm.d.data.history">
+                <td><b>{{h.scopeLabel}}</b></td>
+                <td>{{h.startedAt | rxDateTime}}</td>
+                <td>{{h.percentage != null ? h.percentage + '%' : '-'}}</td>
+                <td>
+                  <span class="rb amber" ng-if="h.status !== 'SUBMITTED'">In progress</span>
+                  <span class="rb green" ng-if="h.status === 'SUBMITTED' && h.passed">Pass</span>
+                  <span class="rb red" ng-if="h.status === 'SUBMITTED' && !h.passed">Fail</span>
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-light btn-sm" ng-if="h.status === 'SUBMITTED'" ng-click="vm.open('/app/results/' + h.attemptId)">Scorecard</button>
+                  <button class="btn btn-primary btn-sm" ng-if="h.status !== 'SUBMITTED' && vm.canResume(h.attemptId)" ng-click="vm.open('/app/test/' + h.attemptId)">Resume</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </rx-card>
+    </div>
+  </rx-loading>
+</div>
