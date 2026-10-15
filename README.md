@@ -34,6 +34,28 @@ gateway and user-service, 32+ chars), `GOOGLE_CLIENT_ID`, `ADMIN_EMAILS` (comma 
 `GOOGLE_DEV_MODE=true` accepts the id token `dev:someone@example.com|Some Name` so the flows can be tried
 without Google. Never enable it outside local development.
 
+## Frontend (`frontend/`)
+
+React + Vite single-page app with two shells, each with a left navigation sidebar.
+
+- **Student portal**: Dashboard, Syllabus, Study Table, Mock Arena, Profile, Plans & Renewal. The top bar has the
+  exam-stage switcher, the validity badge (turns amber at 5 days or fewer, click to renew) and the profile menu.
+  Study and test screens carry the forensic watermark and screen shielding.
+- **Admin console**: Overview (pending payments, open tickets, content readiness, expiring plans), Candidates &
+  Support, Invite Codes, Content Matrix (with ingestion), MCQ Editor, Snapshot Vault, Exams & Plans, Tier Control.
+  The sidebar shows a live count of payments and tickets awaiting action.
+
+```bash
+cd frontend
+cp .env.example .env      # set VITE_GOOGLE_CLIENT_ID, or keep VITE_DEV_LOGIN=true for local development
+npm install
+npm run dev               # http://localhost:3000, proxies /api to the gateway on :8080
+```
+
+First run: start the services with `GOOGLE_DEV_MODE=true ADMIN_EMAILS=you@example.com`, sign in as that email
+(it becomes the admin), then create an exam, papers, topics, a payment config and a plan under the admin console.
+Generate an invite code to register a student.
+
 ## How the PRD maps to the services
 
 - **Invite gate, Google auth, safeguards**: `POST /api/auth/invite/validate`, `/register`, `/login`. Login of an
@@ -55,7 +77,7 @@ without Google. Never enable it outside local development.
 
 ## Not built yet
 
-- Frontend. The watermark, copy protection and screen shielding are client behaviour and need the UI.
+- Visual and end-to-end checks of the UI against running services (the frontend builds, but has not been browsed).
 - Excel (`.xlsx`) MCQ upload: CSV files and pasted spreadsheet rows work; `.xlsx` is rejected with a clear message.
 - Automated tests, and a runtime check against a live Neo4j (the code compiles; it has not been booted).
 - All services share one Neo4j database (Community edition allows one) and keep to their own node labels.
